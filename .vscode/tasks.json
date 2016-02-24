@@ -1,0 +1,66 @@
+{
+  // See http://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "0.1.0",
+  "command": "npm",
+  "isShellCommand": true,
+  "showOutput": "always",
+  "suppressTaskName": true,
+  "tasks": [{
+    "taskName": "dev",
+    "args": ["run", "dev"],
+    "isBuildCommand": true,
+    "isWatching": true,
+    "showOutput": "silent",
+    "problemMatcher": {
+      // The problem is owned by the cpp language service.
+      // "owner": "js",
+      // The file name for reported problems is relative to the opened folder.
+      "fileLocation": "absolute",
+      // The actual pattern to match problems in the output.
+      "pattern": {
+        // The regular expression. Example to match: helloWorld.c:5:3: warning: implicit declaration of function ‘prinft’ [-Wimplicit-function-declaration]
+        "regexp": "^(.*):(.*)\\((\\d+):(\\d)+\\) in (\\/.+)$",
+        // The first match group matches the file name which is relative.
+        "file": 5,
+        // The second match group matches the line on which the problem occurred.
+        "line": 3,
+        // The third match group matches the column at which the problem occurred.
+        "column": 4,
+        // The fourth match group matches the problem's severity. Can be ignored. Then all problems are captured as errors.
+        // The fifth match group matches the message.
+        "message": 2,
+        "loop": false
+      },
+      "watching": {
+        "activeOnStart": true,
+        "beginsPattern": "^change",
+        "endsPattern": "^npm ERR"
+      }
+    }
+  },{
+    "taskName": "build",
+    "args": ["run", "build"],
+    "problemMatcher": {
+      // The problem is owned by the cpp language service.
+      // "owner": "js",
+      // The file name for reported problems is relative to the opened folder.
+      "fileLocation": "absolute",
+      // The actual pattern to match problems in the output.
+      "pattern": {
+        // The regular expression. Example to match: helloWorld.c:5:3: warning: implicit declaration of function ‘prinft’ [-Wimplicit-function-declaration]
+        "regexp": "^(.*):(.*)\\((\\d+):(\\d)+\\) in (\\/.+)$",
+        // The first match group matches the file name which is relative.
+        "file": 5,
+        // The second match group matches the line on which the problem occurred.
+        "line": 3,
+        // The third match group matches the column at which the problem occurred.
+        "column": 4,
+        // The fourth match group matches the problem's severity. Can be ignored. Then all problems are captured as errors.
+        // The fifth match group matches the message.
+        "message": 2,
+        "loop": false
+      }
+    }
+  }]
+}

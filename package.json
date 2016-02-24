@@ -1,0 +1,37 @@
+{
+  "name": "smart-toc",
+  "version": "0.0.1",
+  "description": "an chrome extension that generates a table of content for webpage",
+  "main": "src/js/index.js",
+  "scripts": {
+    "chrome": "cp --update src/chrome/* dist/ && npm run icon",
+    "icon": "convert -resize 128X128 src/chrome/icon.png  dist/icon128.png",
+    "build": "rollup -c ",
+    "publish": "npm run chrome && npm run build && zip -r smart-toc.zip dist",
+    "dev": "DEV=true chokidar 'src/**' -c 'npm run build' -t 500 --initial",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FallenMax/smart-toc.git"
+  },
+  "keywords": [
+    "chrome",
+    "extension",
+    "table-of-content",
+    "toc",
+    "nav",
+    "navigation"
+  ],
+  "author": "FallenMax@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FallenMax/smart-toc/issues"
+  },
+  "homepage": "https://github.com/FallenMax/smart-toc#readme",
+  "devDependencies": {
+    "chokidar-cli": "1.2.0",
+    "rollup": "0.25.8",
+    "rollup-plugin-replace": "1.1.0"
+  }
+}

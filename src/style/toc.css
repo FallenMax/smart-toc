@@ -1,0 +1,158 @@
+/* EVERYTHING HERE WILL BE '!IMPORTANT'  */
+
+
+/* reset */
+
+#smarttoc {
+  all: initial;
+}
+
+#smarttoc * {
+  all: unset;
+}
+
+
+/* container */
+
+#smarttoc {
+  position: fixed;
+  max-width: 22em;
+  min-width: 15em;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  z-index: 100;
+  box-sizing: border-box;
+  background-color: #fff;
+  padding: 2em 1.3em 1.3em 1em;
+  color: gray;
+  font-size: calc(12px + 0.15vw);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: normal;
+  border: 1px solid rgba(158, 158, 158, 0.22);
+  border-radius: 0.3em;
+  box-shadow: 0em 0.1em 0.3em rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: subpixel-antialiased;
+  font-smoothing: subpixel-antialiased;
+}
+
+#smarttoc.hidden {
+  display: none;
+}
+
+#smarttoc .handle {
+  -webkit-user-select: none;
+  user-select: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  border-left: 1px solid rgba(158, 158, 158, 0.22);
+  border-bottom: 1px solid rgba(158, 158, 158, 0.22);
+  border-bottom-left-radius: 0.2em;
+  padding: 0.1em 0.7em;
+  font-variant-caps: inherit;
+  font-variant: small-caps;
+  font-size: 0.9em;
+  color: #bbb;
+  cursor: pointer;
+}
+
+#smarttoc .handle:hover,
+#smarttoc .handle:active {
+  background: #f9f9f9;
+  cursor: move;
+}
+
+
+/* all headings  */
+
+#smarttoc ul,
+#smarttoc li {
+  list-style: none;
+  padding-left: 0;
+  display: block;
+}
+
+#smarttoc a {
+  text-decoration: none;
+  color: gray;
+  display: block;
+}
+
+#smarttoc a:hover,
+#smarttoc a:active {
+  border-left-color: rgba(86, 61, 124, 0.5);
+  color: #563d7c;
+}
+
+#smarttoc li.active > a {
+  border-left-color: #563d7c;
+  color: #563d7c;
+}
+
+
+/* heading level: 1 */
+
+#smarttoc ul {
+  line-height: 2;
+  font-size: 1em;
+}
+
+#smarttoc ul a {
+  padding-left: 1.3em;
+}
+
+#smarttoc ul a:hover,
+#smarttoc ul a:active,
+#smarttoc ul li.active > a {
+  border-left-width: 3px;
+  border-left-style: solid;
+  padding-left: calc(1.3em - 3px);
+}
+
+#smarttoc ul li.active > a {
+  font-weight: 700;
+}
+
+
+/* heading level: 2 */
+
+#smarttoc ul ul {
+  line-height: 1.8;
+  font-size: 1em;
+}
+
+#smarttoc ul ul a {
+  padding-left: 2.7em;
+}
+
+#smarttoc ul ul a:hover,
+#smarttoc ul ul a:active,
+#smarttoc ul ul li.active > a {
+  border-left-width: 2px;
+  border-left-style: solid;
+  padding-left: calc(2.7em - 2px);
+  font-weight: normal;
+}
+
+
+/* heading level: 3 (hidden unless parent is active) */
+
+#smarttoc ul ul ul {
+  line-height: 1.7;
+  display: none;
+  font-size: 1em;
+}
+
+#smarttoc ul ul ul a {
+  padding-left: 4em;
+}
+
+#smarttoc ul ul ul a:hover,
+#smarttoc ul ul ul a:active,
+#smarttoc ul ul ul li.active > a {
+  border-left-width: 1px;
+  border-left-style: solid;
+  padding-left: calc(4em - 1px);
+  font-weight: normal;
+}

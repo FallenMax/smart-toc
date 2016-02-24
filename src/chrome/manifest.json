@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "Smart TOC",
+  "version": "0.0.1",
+  "description": "Generate a table of content for current page",
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_title": "Table of Content"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "commands": {
+    "toggle": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E",
+        "chromeos": "Ctrl+Shift+E",
+        "linux": "Ctrl+Shift+E"
+      },
+      "description": "Show/hide TOC"
+    }
+  },
+  "permissions": [
+    "activeTab"
+  ],
+  "author": "FallenMax@gmail.com"
+}
