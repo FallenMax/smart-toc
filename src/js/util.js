@@ -172,3 +172,40 @@ export function applyStyle(elem, style = {}, reset = false) {
 export function translate3d(x = 0, y = 0, z = 0) {
   return `translate3d(${x}px, ${y}px, ${z}px)`
 }
+
+
+export const toast = (function toastFactory() {
+  let timers = []
+  return function toast(msg) {
+    let toast
+    if (document.getElementById('smart-toc-toast')) {
+      toast = document.getElementById('smart-toc-toast')
+    } else {
+      toast = document.createElement('DIV')
+      toast.id = 'smarttoc-toast'
+      document.body.appendChild(toast)
+      let style = document.createElement('STYLE')
+      style.type = 'text/css'
+      style.id = 'smarttoc_toast_css'
+      style.textContent = __CSS_TOAST__.replace(/;/g, ' !important;') // will be replaced when built
+      document.head.appendChild(style)
+    }
+    toast.textContent = msg
+
+    timers.forEach(clearTimeout)
+    toast.classList = ''
+
+    const set = (names, delay) => setTimeout(() => {
+      toast.classList = names
+    }, delay)
+
+    toast.classList = 'enter'
+    timers = [
+      set('enter enter-active', 0),
+      set('leave', 3000),
+      set('leave leave-active', 3000),
+      set('', 3000 + 200)
+    ]
+  }
+
+})()

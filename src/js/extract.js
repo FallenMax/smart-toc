@@ -123,6 +123,6 @@ const extractHeadings = function(article) {
 
 export default function extract() {
   const article = extractArticle(document)
-  const headings = extractHeadings(article)
+  const headings = article && extractHeadings(article)
   return [article, headings]
 }

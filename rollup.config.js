@@ -1,12 +1,17 @@
 import replace from 'rollup-plugin-replace'
 import fs from 'fs'
 
-let cssString = JSON.stringify(
+let cssToc = JSON.stringify(
   fs.readFileSync('src/style/toc.css', {
     encoding: 'utf8'
   })
 )
 
+let cssToast = JSON.stringify(
+  fs.readFileSync('src/style/toast.css', {
+    encoding: 'utf8'
+  })
+)
 
 export default {
   entry: 'src/js/index.js',
@@ -15,7 +20,8 @@ export default {
   dest: 'dist/toc.js',
   plugins: [
     replace({
-      __CSS_STRING__: cssString,
+      __CSS_TOC__: cssToc,
+      __CSS_TOAST__: cssToast,
       __DEV__: !!process.env.DEV
     })
   ]

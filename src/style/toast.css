@@ -1,0 +1,54 @@
+#smarttoc-toast {
+  all: initial;
+}
+
+#smarttoc-toast * {
+  all: unset;
+}
+
+#smarttoc-toast {
+  display: none;
+  position: fixed;
+  right: 0;
+  top: 0;
+  margin: 1em 2em;
+  padding: 1em;
+  z-index: 100;
+  box-sizing: border-box;
+  background-color: #fff;
+  border: 1px solid rgba(158, 158, 158, 0.22);
+  color: gray;
+  font-size: calc(12px + 0.15vw);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: normal;
+  border-radius: 0.3em;
+  box-shadow: 0em 0.1em 0.3em rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: subpixel-antialiased;
+  font-smoothing: subpixel-antialiased;
+}
+
+#smarttoc-toast.enter {
+  display: block;
+  opacity: 0.01;
+  transform: translate3d(0, -2em, 0);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+#smarttoc-toast.enter.enter-active {
+  display: block;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+#smarttoc-toast.leave {
+  display: block;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 200ms ease-in, transform 200ms ease-out;
+}
+
+#smarttoc-toast.leave.leave-active {
+  display: block;
+  opacity: 0.01;
+  transform: translate3d(0, -2em, 0);
+}

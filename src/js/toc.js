@@ -80,7 +80,7 @@ const insertCSS = function() {
   let style = document.createElement('STYLE')
   style.type = 'text/css'
   style.id = 'smarttoc_css'
-  style.textContent = __CSS_STRING__.replace(/;/g, ' !important;') // will be replaced when built
+  style.textContent = __CSS_TOC__.replace(/;/g, ' !important;') // will be replaced when built
   document.head.appendChild(style)
   return
 }
