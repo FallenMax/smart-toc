@@ -7,7 +7,7 @@
     "clean": "rm dist/* smart-toc.zip",
     "chrome": "cp --update src/chrome/* dist/",
     "build": "rollup -c ",
-    "zip": "rm smart-toc.zip; zip -r smart-toc.zip dist",
+    "zip": "zip -r smart-toc.zip dist",
     "publish": "npm run clean && npm run chrome && npm run build && npm run zip",
     "dev": "DEV=true chokidar 'src/**' -c 'npm run build' -t 500 --initial",
     "test": "echo \"Error: no test specified\" && exit 1"

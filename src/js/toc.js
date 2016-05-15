@@ -128,7 +128,7 @@ const resizeStream = function() {
 // make article slightly easier to read?
 const calcArticleStyle = function(article) {
   let articleFontSize = num(window.getComputedStyle(article).fontSize)
-  let bestContentWidth = Math.max(articleFontSize, 12) * 66
+  let bestContentWidth = Math.min(Math.max(articleFontSize, 12), 16) * 66
   return {
     marginLeft: 'auto',
     marginRight: 'auto',

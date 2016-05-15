@@ -178,8 +178,8 @@ export const toast = (function toastFactory() {
   let timers = []
   return function toast(msg) {
     let toast
-    if (document.getElementById('smart-toc-toast')) {
-      toast = document.getElementById('smart-toc-toast')
+    if (document.getElementById('smarttoc-toast')) {
+      toast = document.getElementById('smarttoc-toast')
     } else {
       toast = document.createElement('DIV')
       toast.id = 'smarttoc-toast'
@@ -207,5 +207,4 @@ export const toast = (function toastFactory() {
       set('', 3000 + 200)
     ]
   }
-
 })()
