@@ -127,15 +127,19 @@ const resizeStream = function() {
 
 // make article slightly easier to read?
 const calcArticleStyle = function(article) {
-  let articleFontSize = num(window.getComputedStyle(article).fontSize)
+  let computed = window.getComputedStyle(article)
+  let articleFontSize = num(computed.fontSize)
   let bestContentWidth = Math.min(Math.max(articleFontSize, 12), 16) * 66
-  return {
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    maxWidth: bestContentWidth,
-    overflowX: 'visible',
-    position: 'relative'
-  }
+  return Object.assign({
+      maxWidth: bestContentWidth,
+      overflowX: 'visible',
+      position: 'relative'
+    },
+    (num(computed.marginLeft) || num(computed.marginRight)) ? {} : {
+      marginLeft: 'auto',
+      marginRight: 'auto'
+    }
+  )
 }
 
 // where should us put our shiny toc
@@ -385,7 +389,8 @@ export default function createTOC(article, _headings) {
     (isShow) => {
       let lastHeading = headings.slice(-1)[0].node
       let lastRect = lastHeading.getBoundingClientRect()
-      let heightBelowLastRect = document.documentElement.scrollHeight - (lastRect.bottom + window.scrollY) - num(extender.style.height) // in case we are there already
+      let heightBelowLastRect = document.documentElement.scrollHeight - (lastRect.bottom + window.scrollY) - num(
+          extender.style.height) // in case we are there already
       let extenderHeight = isShow ? Math.max(window.innerHeight - lastRect.height - heightBelowLastRect, 0) : 0
       applyStyle(extender, {
         height: extenderHeight

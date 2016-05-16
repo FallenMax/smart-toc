@@ -7,6 +7,10 @@
     "default_icon": "icon.png",
     "default_title": "Toggle table of contents"
   },
+  "icons": {
+    "16": "icon.png",
+    "128": "icon128.png"
+  },
   "background": {
     "scripts": ["background.js"],
     "persistent": false
