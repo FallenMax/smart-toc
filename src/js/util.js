@@ -89,7 +89,6 @@ export function Stream(initial, id = '') {
 Stream.combine = function(streams, reducer = (...values) => [...values], id) {
   let cached = streams.map(s => s())
   let $combined = Stream(reducer(...cached), id)
-  $combined.id
   streams.forEach((stream, i) => {
     stream.subscribe(val => {
       cached[i] = val

@@ -147,6 +147,10 @@
   font-size: 1em;
 }
 
+#smarttoc ul ul li.active > ul {
+  display: block;
+}
+
 #smarttoc ul ul ul a {
   padding-left: 4em;
 }
