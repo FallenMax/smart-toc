@@ -358,7 +358,7 @@ export default function createTOC(article, _headings) {
   container.appendChild(toc)
   article.appendChild(container)
   if (isLengthy(headings)) {
-    container.classList.add('.lengthy')
+    container.classList.add('lengthy')
   }
 
   // toc: allow user drag around
