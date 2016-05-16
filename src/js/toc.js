@@ -325,6 +325,10 @@ const handleUserDrag = function(handle) {
   return $userOffset
 }
 
+const isLengthy = function(headings) {
+  return headings.filter(h => (h.level <= 2)).length > 50
+}
+
 export default function createTOC(article, _headings) {
   // set up basic events
   const $isShow = Stream(true, 'isShow')
@@ -357,6 +361,9 @@ export default function createTOC(article, _headings) {
   container.appendChild(handle)
   container.appendChild(toc)
   article.appendChild(container)
+  if (isLengthy(headings)) {
+    container.classList.add('.lengthy')
+  }
 
   // toc: allow user drag around
   const $userOffset = handleUserDrag(handle)

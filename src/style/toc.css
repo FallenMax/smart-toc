@@ -118,11 +118,19 @@
 }
 
 
-/* heading level: 2 */
+/* heading level: 2 (hidden only when there are too many headings)  */
 
 #smarttoc ul ul {
   line-height: 1.8;
   font-size: 1em;
+}
+
+#smarttoc.lengthy ul ul {
+  display: none;
+}
+
+#smarttoc.lengthy ul li.active > ul {
+  display: block;
 }
 
 #smarttoc ul ul a {
