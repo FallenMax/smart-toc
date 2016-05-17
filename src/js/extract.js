@@ -65,8 +65,8 @@ const extractArticle = function(rootElement = document) {
     )
   const sorted = [...scores].sort((a, b) => (b[1] - a[1]))
 
-  // reweigh top 3 nodes by factor:  "take-lots-vertical-space", "contain-less-links"
-  const candicates = sorted.slice(0, 3).filter(Boolean)
+  // reweigh top 5 nodes by factor:  "take-lots-vertical-space", "contain-less-links"
+  const candicates = sorted.slice(0, 5).filter(Boolean)
   const reweighted = candicates
     .map(([elem, score]) => [
       elem,
@@ -75,6 +75,8 @@ const extractArticle = function(rootElement = document) {
     .sort((a, b) => (b[1] - a[1]))
   const article = reweighted.length ? reweighted[0][0] : null
   if (__DEV__) {
+    log(sorted)
+    log(reweighted)
     draw(article)
   }
   return article
