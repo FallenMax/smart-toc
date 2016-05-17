@@ -97,12 +97,8 @@ const addAnchors = function(headings) {
     if (!anchor) {
       anchor = node.id = unique(safe(node.textContent))
     } else {
-      unique(anchor)
+      anchor = unique(anchor)
     }
-    // if (__DEV__) {
-    //   node.textContent += '$' + i
-    // }
-
     return { node, level, anchor }
   })
   return anchoredHeadings
