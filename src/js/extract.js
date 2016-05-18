@@ -31,15 +31,15 @@ const extractArticle = function(rootElement = document) {
 
   // weigh nodes by factor: "selector", "distance from this node"
   const weights = {
-    h1: [0, 20, 16, 10, 4, 4],
+    h1: [0, 40, 32, 20, 8, 8],
     h2: [0, 100, 80, 50, 20, 20],
     h3: [0, 100, 80, 50, 20, 20],
     h4: [0, 100, 80, 50, 20, 20],
     h5: [0, 100, 80, 50, 20, 20],
     h6: [0, 100, 80, 50, 20, 20],
-    section: [0, 100, 80, 50, 20, 20],
-    '.section': [0, 100, 80, 50, 20, 20],
-    article: [200],
+    // section: [0, 100, 80, 50, 20, 20],
+    // '.section': [0, 100, 80, 50, 20, 20],
+    article: [100],
     '.article': [200],
     '.content': [101],
     'sidebar': [-200],
@@ -70,13 +70,16 @@ const extractArticle = function(rootElement = document) {
   const reweighted = candicates
     .map(([elem, score]) => [
       elem,
-      score * elem.scrollHeight / (elem.querySelectorAll('a').length || 1)
+      score * elem.scrollHeight / (elem.querySelectorAll('a').length || 1),
+      elem.scrollHeight,
+      elem.querySelectorAll('a').length
     ])
     .sort((a, b) => (b[1] - a[1]))
   const article = reweighted.length ? reweighted[0][0] : null
   if (__DEV__) {
     log(sorted)
     log(reweighted)
+    log(article)
     draw(article)
   }
   return article
