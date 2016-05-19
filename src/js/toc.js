@@ -258,20 +258,24 @@ const updateActiveHeading = function(container, activeIndex) {
   }
 }
 
+const scrollToHeading = function({ node, anchor }) {
+  scrollTo({
+    targetElem: node,
+    topMargin: 30,
+    maxDuration: 300,
+    callback: () => {
+      history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
+    }
+  })
+}
+
 const handleClickHeading = function(container, headings) {
   function onClick(e) {
     e.preventDefault()
     e.stopPropagation()
     let anchor = e.target.getAttribute('href').substr(1)
     let { node } = headings.find(heading => (heading.anchor === anchor))
-    scrollTo({
-      targetElem: node,
-      topMargin: 30,
-      maxDuration: 300,
-      callback: () => {
-        history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
-      }
-    })
+    scrollToHeading({ node, anchor })
   }
   container.addEventListener('click', onClick, true)
 }
@@ -424,6 +428,14 @@ export default function createTOC(article, _headings) {
   })
 
   return {
-    toggle: () => $isShow(!$isShow())
+    toggle: () => $isShow(!$isShow()),
+    next: () => {
+      let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
+      scrollToHeading(headings[nextIdx])
+    },
+    prev: () => {
+      let prevIdx = Math.max(0, $activeHeading() - 1)
+      scrollToHeading(headings[prevIdx])
+    }
   }
 }

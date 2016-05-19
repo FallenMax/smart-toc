@@ -24,6 +24,12 @@
         "linux": "Ctrl+Shift+E"
       },
       "description": "Show/hide TOC"
+    },
+    "prev": {
+      "description": "Jump to previous heading"
+    },
+    "next": {
+      "description": "Jump to next heading"
     }
   },
   "permissions": [
