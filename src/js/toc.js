@@ -432,12 +432,16 @@ export default function createTOC(article, _headings) {
   return {
     toggle: () => $isShow(!$isShow()),
     next: () => {
-      let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
-      scrollToHeading(headings[nextIdx])
+      if ($isShow()) {
+        let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
+        scrollToHeading(headings[nextIdx])
+      }
     },
     prev: () => {
-      let prevIdx = Math.max(0, $activeHeading() - 1)
-      scrollToHeading(headings[prevIdx])
+      if ($isShow()) {
+        let prevIdx = Math.max(0, $activeHeading() - 1)
+        scrollToHeading(headings[prevIdx])
+      }
     }
   }
 }
