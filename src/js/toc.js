@@ -258,13 +258,15 @@ const updateActiveHeading = function(container, activeIndex) {
   }
 }
 
-const scrollToHeading = function({ node, anchor }) {
+const scrollToHeading = function({ node, anchor }, shouldPushState = false) {
   scrollTo({
     targetElem: node,
     topMargin: 30,
     maxDuration: 300,
     callback: () => {
-      history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
+      if (shouldPushState) {
+        history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
+      }
     }
   })
 }
@@ -275,7 +277,7 @@ const handleClickHeading = function(container, headings) {
     e.stopPropagation()
     let anchor = e.target.getAttribute('href').substr(1)
     let { node } = headings.find(heading => (heading.anchor === anchor))
-    scrollToHeading({ node, anchor })
+    scrollToHeading({ node, anchor }, true)
   }
   container.addEventListener('click', onClick, true)
 }
