@@ -128,7 +128,7 @@ const calcArticleStyle = function(article) {
   let bestContentWidth = Math.min(Math.max(articleFontSize, 12), 16) * 66
   return Object.assign({
       maxWidth: bestContentWidth,
-      overflowX: 'visible',
+      overflow: 'visible',
       position: 'relative'
     },
     (num(computed.marginLeft) || num(computed.marginRight)) ? {} : {
