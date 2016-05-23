@@ -172,6 +172,11 @@ export function translate3d(x = 0, y = 0, z = 0) {
   return `translate3d(${x}px, ${y}px, ${z}px)`
 }
 
+export function translate(x = 0, y = 0, z = 0) {
+  return `translate(${x}px, ${y}px)`
+}
+
+
 
 export const toast = (function toastFactory() {
   let timers = []

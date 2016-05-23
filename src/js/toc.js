@@ -1,4 +1,4 @@
-import { px, num, log, throttle, scrollTo, unique, safe, toDash, translate3d, applyStyle, Stream } from './util'
+import { px, num, log, throttle, scrollTo, unique, safe, toDash, translate, applyStyle, Stream } from './util'
 
 const createHandle = function() {
   let handle = document.createElement('DIV')
@@ -126,10 +126,7 @@ const calcArticleStyle = function(article) {
   let computed = window.getComputedStyle(article)
   let articleFontSize = num(computed.fontSize)
   let bestContentWidth = Math.min(Math.max(articleFontSize, 12), 16) * 66
-  return Object.assign({
-      overflow: 'visible',
-      position: 'relative'
-    },
+  return Object.assign(
     (num(computed.marginLeft) || num(computed.marginRight)) ? {} : {
       marginLeft: 'auto',
       marginRight: 'auto'
@@ -156,20 +153,6 @@ const calcContainerLayout = function(article) {
 
 const makeSticky = function(options) {
   let { ref, popper, direction, gap, topMargin, $refChange, $scroll, $offset } = options
-  let anyParentHasTransform = (function(elem) { // any "transform: *"  will break our 'position: fixed"
-    while (elem) {
-      let style = window.getComputedStyle(elem)
-      for (let prop in style) {
-        if (style.hasOwnProperty(prop)) {
-          if (/(t|T)ransform/.test(prop) && /matrix/.test(style[prop])) {
-            return true
-          }
-        }
-      }
-      elem = elem.parentElement
-    }
-    return false
-  })(popper)
   let $refMetric = Stream.combine([$refChange],
     () => {
       let refRect = ref.getBoundingClientRect()
@@ -186,36 +169,16 @@ const makeSticky = function(options) {
   )
   let popperMetric = popper.getBoundingClientRect()
   return Stream.combine([$refMetric, $scroll, $offset],
-    ({ top, right, bottom, left }, [scrollX, scrollY], [offsetX, offsetY]) => {
-      if (top < scrollY + topMargin) { // stick at viewport top
-        if (!anyParentHasTransform) {
-          let style = {
-            position: 'fixed',
-            top: topMargin,
-            left: direction === 'left' ? left - gap - popperMetric.width - scrollX : right + gap - scrollX
-          }
-          if (offsetX || offsetY) {
-            style.transform = translate3d(offsetX, offsetY)
-          }
-          return style
-        } else {
-          return {
-            position: 'absolute',
-            top: 0,
-            [direction]: -gap - popperMetric.width,
-            transform: translate3d(offsetX, scrollY + topMargin - top + offsetY)
-          }
-        }
-      } else { // follow ref
-        let style = {
-          position: 'absolute',
-          top: 0,
-          [direction]: -gap - popperMetric.width
-        }
-        if (offsetX || offsetY) {
-          style.transform = translate3d(offsetX, offsetY)
-        }
-        return style
+    (article, [scrollX, scrollY], [offsetX, offsetY]) => {
+      let x = direction === 'right' ? article.right + gap - scrollX : article.left - gap - popperMetric.width -
+        scrollX
+      x = Math.min(Math.max(0, x), window.innerWidth - popperMetric.width) // restrict to visible area
+      let y = Math.max(topMargin, article.top - scrollY)
+      return {
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        transform: translate(x + offsetX, y + offsetY)
       }
     },
     'sticky'
@@ -364,7 +327,7 @@ export default function createTOC(article, _headings) {
   const toc = createHeadingDOM(headings)
   container.appendChild(handle)
   container.appendChild(toc)
-  article.appendChild(container)
+  document.body.appendChild(container)
   if (isLengthy(headings)) {
     container.classList.add('lengthy')
   }
