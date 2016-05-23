@@ -1,4 +1,4 @@
-import { px, num, log, throttle, scrollTo, unique, safe, toDash, translate, applyStyle, Stream } from './util'
+import { px, num, log, throttle, scrollTo, unique, safe, toDash, translate3d, applyStyle, Stream } from './util'
 
 const createHandle = function() {
   let handle = document.createElement('DIV')
@@ -178,7 +178,7 @@ const makeSticky = function(options) {
         position: 'fixed',
         left: 0,
         top: 0,
-        transform: translate(x + offsetX, y + offsetY)
+        transform: translate3d(x + offsetX, y + offsetY)
       }
     },
     'sticky'

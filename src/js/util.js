@@ -169,14 +169,8 @@ export function applyStyle(elem, style = {}, reset = false) {
 }
 
 export function translate3d(x = 0, y = 0, z = 0) {
-  return `translate3d(${x}px, ${y}px, ${z}px)`
+  return `translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${Math.round(z)}px)` // 0.5px => blurred text
 }
-
-export function translate(x = 0, y = 0, z = 0) {
-  return `translate(${x}px, ${y}px)`
-}
-
-
 
 export const toast = (function toastFactory() {
   let timers = []
