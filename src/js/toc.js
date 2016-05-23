@@ -388,11 +388,13 @@ export default function createTOC(article, _headings) {
   })
 
   // now show what we've found
-  scrollTo({
-    targetElem: article,
-    topMargin: 30,
-    maxDuration: 600
-  })
+  if (article.getBoundingClientRect().top > 30) {
+    scrollTo({
+      targetElem: article,
+      topMargin: 30,
+      maxDuration: 600
+    })
+  }
 
   return {
     toggle: () => $isShow(!$isShow()),
