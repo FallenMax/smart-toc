@@ -25,13 +25,13 @@
   box-shadow: 0em 0.1em 0.3em rgba(0, 0, 0, 0.1);
   -webkit-font-smoothing: subpixel-antialiased;
   font-smoothing: subpixel-antialiased;
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
 
 #smarttoc-toast.enter {
   display: block;
   opacity: 0.01;
   transform: translate3d(0, -2em, 0);
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
 
 #smarttoc-toast.enter.enter-active {
@@ -44,7 +44,6 @@
   display: block;
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  transition: opacity 200ms ease-in, transform 200ms ease-out;
 }
 
 #smarttoc-toast.leave.leave-active {

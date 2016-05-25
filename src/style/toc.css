@@ -171,3 +171,24 @@
   padding-left: calc(4em - 1px);
   font-weight: normal;
 }
+
+
+/* utils */
+
+.smarttoc-hightlight-enter {
+  background: rgba(255, 255, 0, 0.0);
+}
+
+.smarttoc-hightlight-enter.smarttoc-hightlight-enter-active {
+  background: rgba(255, 255, 0, 1);
+  /*transition: background 10ms;*/
+}
+
+.smarttoc-hightlight-leave {
+  background: rgba(255, 255, 0, 1);
+}
+
+.smarttoc-hightlight-leave.smarttoc-hightlight-leave-active {
+  background: rgba(255, 255, 0, 0.0);
+  transition: background 2000ms;
+}

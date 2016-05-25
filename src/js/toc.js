@@ -1,4 +1,4 @@
-import { px, num, log, throttle, scrollTo, unique, safe, toDash, translate3d, applyStyle, Stream } from './util'
+import { px, num, log, throttle, scrollTo, unique, safe, highlight, translate3d, applyStyle, Stream } from './util'
 
 const createHandle = function() {
   let handle = document.createElement('DIV')
@@ -229,6 +229,7 @@ const scrollToHeading = function({ node, anchor }, shouldPushState = false) {
     topMargin: 30,
     maxDuration: 300,
     callback: () => {
+      highlight(node)
       if (shouldPushState) {
         history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
       }
@@ -395,6 +396,7 @@ export default function createTOC(article, _headings) {
       maxDuration: 600
     })
   }
+
 
   return {
     toggle: () => $isShow(!$isShow()),

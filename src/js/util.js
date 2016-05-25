@@ -172,6 +172,24 @@ export function translate3d(x = 0, y = 0, z = 0) {
   return `translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${Math.round(z)}px)` // 0.5px => blurred text
 }
 
+export const highlight = function(elem, duration = 10) {
+  const set = (names, delay) =>
+    setTimeout(() => {
+      elem.className = [].slice.apply(elem.classList)
+        .filter(name => !name.startsWith('smarttoc-hightlight-'))
+        .concat(names.split(' ')
+          .filter(Boolean)
+          .map(name => 'smarttoc-hightlight-' + name))
+        .join(' ')
+    }, delay)
+
+  elem.classList.add('smarttoc-hightlight-enter')
+  set('enter enter-active', 0)
+  set('leave', duration)
+  set('leave leave-active', duration + 16)
+  set('', duration + 2000)
+}
+
 export const toast = (function toastFactory() {
   let timers = []
   return function toast(msg) {
