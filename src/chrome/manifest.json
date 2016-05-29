@@ -12,7 +12,10 @@
     "128": "icon128.png"
   },
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "history.js",
+      "background.js"
+    ],
     "persistent": false
   },
   "commands": {
@@ -33,7 +36,8 @@
     }
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "notifications"
   ],
   "author": "FallenMax@gmail.com"
 }

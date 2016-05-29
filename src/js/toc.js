@@ -1,4 +1,4 @@
-import { px, num, log, throttle, scrollTo, unique, safe, highlight, translate3d, applyStyle, Stream } from './util'
+import { px, num, log, draw, throttle, scrollTo, unique, safe, highlight, translate3d, applyStyle, Stream } from './util'
 
 const createHandle = function() {
   let handle = document.createElement('DIV')
@@ -104,11 +104,26 @@ const addAnchors = function(headings) {
   return anchoredHeadings
 }
 
+// find first parent elems that can scroll, or document.body
+const getScrollParent = function(elem) {
+  const canScroll = el => {
+    return ['auto', 'scroll'].includes(window.getComputedStyle(el).overflowY) && (el.clientHeight + 1 <
+      el.scrollHeight)
+  }
+  while (elem && (elem !== document.body) && !canScroll(elem)) {
+    elem = elem.parentElement
+  }
+  log('scrollable', elem)
+  draw(elem, 'purple')
+  return elem
+}
 
-const scrollStream = function() {
-  let $scrollY = Stream([window.scrollX, window.scrollY])
-  window.addEventListener('scroll', throttle(
-    () => $scrollY([window.scrollX, window.scrollY])
+const scrollStream = function(scrollable = window) {
+  let $scrollY = Stream([scrollable.scrollLeft, scrollable.scrollTop]);
+  (scrollable === document.body ? window : scrollable).addEventListener('scroll', throttle(
+    () => {
+      $scrollY([scrollable.scrollLeft, scrollable.scrollTop])
+    }
   ))
   return $scrollY
 }
@@ -164,14 +179,12 @@ const makeSticky = function(options) {
         width: refRect.width,
         height: refRect.height
       }
-    },
-    'refMetric'
+    }
   )
   let popperMetric = popper.getBoundingClientRect()
   return Stream.combine([$refMetric, $scroll, $offset],
     (article, [scrollX, scrollY], [offsetX, offsetY]) => {
-      let x = direction === 'right' ? article.right + gap - scrollX : article.left - gap - popperMetric.width -
-        scrollX
+      let x = direction === 'right' ? article.right + gap : article.left - gap - popperMetric.width
       x = Math.min(Math.max(0, x), window.innerWidth - popperMetric.width) // restrict to visible area
       let y = Math.max(topMargin, article.top - scrollY)
       return {
@@ -180,8 +193,7 @@ const makeSticky = function(options) {
         top: 0,
         transform: translate3d(x + offsetX, y + offsetY)
       }
-    },
-    'sticky'
+    }
   )
 }
 
@@ -223,13 +235,14 @@ const updateActiveHeading = function(container, activeIndex) {
   }
 }
 
-const scrollToHeading = function({ node, anchor }, shouldPushState = false) {
+const scrollToHeading = function({ node, anchor }, scrollElem = document.body, shouldPushState = false) {
   scrollTo({
     targetElem: node,
+    scrollElem: scrollElem,
     topMargin: 30,
     maxDuration: 300,
     callback: () => {
-      highlight(node)
+      // highlight(node)  // shoud we ?
       if (shouldPushState) {
         history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
       }
@@ -237,13 +250,13 @@ const scrollToHeading = function({ node, anchor }, shouldPushState = false) {
   })
 }
 
-const handleClickHeading = function(container, headings) {
+const handleClickHeading = function(container, headings, scrollElem) {
   function onClick(e) {
     e.preventDefault()
     e.stopPropagation()
     let anchor = e.target.getAttribute('href').substr(1)
     let { node } = headings.find(heading => (heading.anchor === anchor))
-    scrollToHeading({ node, anchor }, true)
+    scrollToHeading({ node, anchor }, scrollElem, true)
   }
   container.addEventListener('click', onClick, true)
 }
@@ -297,19 +310,21 @@ const isLengthy = function(headings) {
   return headings.filter(h => (h.level <= 2)).length > 50
 }
 
-export default function createTOC(article, _headings) {
-  // set up basic events
-  const $isShow = Stream(true, 'isShow')
+export default function createTOC(article, headings) {
 
-  const $scroll = Stream.combine([$isShow, scrollStream()],
+  const scrollable = getScrollParent(article)
+
+  // headings: they might need some <a>nchors
+  headings = addAnchors(headings)
+
+  // set up basic events
+  const $isShow = Stream(true)
+  const $scroll = Stream.combine([$isShow, scrollStream(scrollable)],
     (isShow, scroll) => (isShow ? scroll : undefined)
   )
   const $resize = Stream.combine([$isShow, resizeStream()],
     (isShow, resize) => (isShow ? resize : undefined)
   )
-
-  // headings: they might need some <a>nchors
-  const headings = addAnchors(_headings)
 
   // article: apply some style
   const oldArticleStyle = article.style.cssText
@@ -359,14 +374,22 @@ export default function createTOC(article, _headings) {
   // toc: extend body height so we can scroll to the last heading
   let extender = document.createElement('DIV')
   extender.id = 'smarttoc-extender'
-  document.body.appendChild(extender)
+  scrollable.appendChild(extender)
   Stream.combine([$isShow, $articleUpdate],
     (isShow) => {
       let lastHeading = headings.slice(-1)[0].node
       let lastRect = lastHeading.getBoundingClientRect()
-      let heightBelowLastRect = document.documentElement.scrollHeight - (lastRect.bottom + window.scrollY) - num(
-          extender.style.height) // in case we are there already
-      let extenderHeight = isShow ? Math.max(window.innerHeight - lastRect.height - heightBelowLastRect, 0) : 0
+      let extenderHeight = 0
+      if (scrollable === document.body) {
+        let heightBelowLastRect = document.documentElement.scrollHeight - (lastRect.bottom + window.scrollY) - num(
+            extender.style.height) // in case we are there already
+        extenderHeight = isShow ? Math.max(window.innerHeight - lastRect.height - heightBelowLastRect, 0) : 0
+      } else {
+        let scrollRect = scrollable.getBoundingClientRect()
+        let heightBelowLastRect = scrollRect.top + scrollable.scrollHeight - scrollable.scrollTop // bottom of scrollable relative to viewport
+          - lastRect.bottom - num(extender.style.height) // in case we are there already
+        extenderHeight = isShow ? Math.max(scrollRect.height - lastRect.height - heightBelowLastRect, 0) : 0
+      }
       applyStyle(extender, {
         height: extenderHeight
       })
@@ -374,7 +397,7 @@ export default function createTOC(article, _headings) {
   )
 
   // toc: when anchor clicked, scroll (smoothly) to heading
-  handleClickHeading(toc, headings)
+  handleClickHeading(toc, headings, scrollable)
 
   // toc: also respond to 'back/forward'
   handlePopstate(headings)
@@ -392,6 +415,7 @@ export default function createTOC(article, _headings) {
   if (article.getBoundingClientRect().top > 30) {
     scrollTo({
       targetElem: article,
+      scrollElem: scrollable,
       topMargin: 30,
       maxDuration: 600
     })
@@ -403,13 +427,13 @@ export default function createTOC(article, _headings) {
     next: () => {
       if ($isShow()) {
         let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
-        scrollToHeading(headings[nextIdx])
+        scrollToHeading(headings[nextIdx], scrollable)
       }
     },
     prev: () => {
       if ($isShow()) {
         let prevIdx = Math.max(0, $activeHeading() - 1)
-        scrollToHeading(headings[prevIdx])
+        scrollToHeading(headings[prevIdx], scrollable)
       }
     }
   }

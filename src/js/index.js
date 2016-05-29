@@ -1,39 +1,31 @@
 import extract from './extract'
 import createTOC from './toc'
-import { toast } from './util'
+import { toast, highlight } from './util'
 
-let instance = typeof smarttoc === 'object' ?
-  smarttoc : { toast }
+const [article, headings] = extract(document)
+let toc = {}
 
-
-if (!instance.toc) {
-  const [article, headings] = extract(document)
-  if (article && headings && headings.length) {
-    instance.toc = createTOC(article, headings)
-    listenToCommand(instance.toc)
-  } else {
-    instance.toast('No article or headings are detected')
-  }
+if (article && headings && headings.length) {
+  toc = createTOC(article, headings)
 } else {
-  instance.toc.toggle()
+  if (article) {
+    highlight(article)
+    toast('No headings are found in this article')
+  } else {
+    toast('No article is detected')
+  }
 }
 
-function listenToCommand(toc) {
-  chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-      switch (request) {
-        case 'next':
-          toc.next()
-          sendResponse(true)
-          break
-        case 'prev':
-          toc.prev()
-          sendResponse(true)
-          break
-        default:
-          sendResponse(false)
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    try {
+      if (toc[request]) {
+        toc[request]()
       }
-    })
-}
-
-export default instance
+      sendResponse(true)
+    } catch (e) {
+      console.error(e)
+      sendResponse(false)
+    }
+  }
+)

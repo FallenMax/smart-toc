@@ -6,3 +6,7 @@ div#mw-content-text.mw-content-ltr
 
 https://www.npmjs.com/package/request
 div#readme.markdown
+
+https://diversity.github.com/
+
+http://mobxjs.github.io/mobx/#introduction

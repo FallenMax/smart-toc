@@ -30,8 +30,6 @@
   line-height: 1.5;
   font-weight: normal;
   border: 1px solid rgba(158, 158, 158, 0.22);
-  border-radius: 0.3em;
-  box-shadow: 0em 0.1em 0.3em rgba(0, 0, 0, 0.1);
   -webkit-font-smoothing: subpixel-antialiased;
   font-smoothing: subpixel-antialiased;
 }
@@ -48,7 +46,6 @@
   top: 0;
   border-left: 1px solid rgba(158, 158, 158, 0.22);
   border-bottom: 1px solid rgba(158, 158, 158, 0.22);
-  border-bottom-left-radius: 0.2em;
   padding: 0.1em 0.7em;
   font-variant-caps: inherit;
   font-variant: small-caps;
@@ -170,25 +167,4 @@
   border-left-style: solid;
   padding-left: calc(4em - 1px);
   font-weight: normal;
-}
-
-
-/* utils */
-
-.smarttoc-hightlight-enter {
-  background: rgba(255, 255, 0, 0.0);
-}
-
-.smarttoc-hightlight-enter.smarttoc-hightlight-enter-active {
-  background: rgba(255, 255, 0, 1);
-  /*transition: background 10ms;*/
-}
-
-.smarttoc-hightlight-leave {
-  background: rgba(255, 255, 0, 1);
-}
-
-.smarttoc-hightlight-leave.smarttoc-hightlight-leave-active {
-  background: rgba(255, 255, 0, 0.0);
-  transition: background 2000ms;
 }

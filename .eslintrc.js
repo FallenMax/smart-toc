@@ -21,6 +21,7 @@ module.exports = {
     smarttoc: false,
     __CSS_TOC__: false,
     __CSS_TOAST__: false,
+    __CSS_HIGHLIGHT__: false,
     __DEV__: false
   }
 }

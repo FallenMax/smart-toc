@@ -21,8 +21,6 @@
   font-size: calc(12px + 0.15vw);
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: normal;
-  border-radius: 0.3em;
-  box-shadow: 0em 0.1em 0.3em rgba(0, 0, 0, 0.1);
   -webkit-font-smoothing: subpixel-antialiased;
   font-smoothing: subpixel-antialiased;
   transition: opacity 200ms ease-out, transform 200ms ease-out;

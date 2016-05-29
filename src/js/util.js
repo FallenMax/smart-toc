@@ -117,11 +117,18 @@ export const scrollTo = (function scrollToFactory() {
     t /= d
     return -c * t * (t - 2) + b
   }
-  return function scrollTo({ targetElem, topMargin = 0, maxDuration = 300, easeFn, callback }) {
+  return function scrollTo({
+    targetElem,
+    scrollElem = document.body,
+    topMargin = 0,
+    maxDuration = 300,
+    easeFn,
+    callback
+  }) {
     window.cancelAnimationFrame(request)
     let rect = targetElem.getBoundingClientRect()
-    let endScrollTop = rect.top + window.scrollY - topMargin
-    let startScrollTop = window.scrollY
+    let endScrollTop = rect.top + scrollElem.scrollTop - topMargin
+    let startScrollTop = scrollElem.scrollTop
     let distance = endScrollTop - startScrollTop
     let startTime
     let ease = easeFn || easeOutQuad
@@ -134,10 +141,10 @@ export const scrollTo = (function scrollToFactory() {
       }
       let progress = (timestamp - startTime) / duration
       if (progress < 1) {
-        document.body.scrollTop = ease(timestamp - startTime, startScrollTop, distance, duration)
+        scrollElem.scrollTop = ease(timestamp - startTime, startScrollTop, distance, duration)
         window.requestAnimationFrame(update)
       } else {
-        document.body.scrollTop = endScrollTop
+        scrollElem.scrollTop = endScrollTop
         if (callback) {
           callback()
         }
@@ -173,17 +180,24 @@ export function translate3d(x = 0, y = 0, z = 0) {
 }
 
 export const highlight = function(elem, duration = 10) {
+  if (!document.getElementById('smarttoc_highlight_css')) {
+    let style = document.createElement('STYLE')
+    style.type = 'text/css'
+    style.id = 'smarttoc_highlight_css'
+    style.textContent = __CSS_HIGHLIGHT__.replace(/;/g, ' !important;') // will be replaced when built
+    document.head.appendChild(style)
+  }
   const set = (names, delay) =>
     setTimeout(() => {
       elem.className = [].slice.apply(elem.classList)
-        .filter(name => !name.startsWith('smarttoc-hightlight-'))
+        .filter(name => !name.startsWith('smarttoc-highlight-'))
         .concat(names.split(' ')
           .filter(Boolean)
-          .map(name => 'smarttoc-hightlight-' + name))
+          .map(name => 'smarttoc-highlight-' + name))
         .join(' ')
     }, delay)
 
-  elem.classList.add('smarttoc-hightlight-enter')
+  elem.classList.add('smarttoc-highlight-enter')
   set('enter enter-active', 0)
   set('leave', duration)
   set('leave leave-active', duration + 16)

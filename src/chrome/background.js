@@ -1,17 +1,30 @@
-// start toc
-chrome.browserAction.onClicked.addListener(tab => {
-  chrome.tabs.executeScript(null, { file: 'toc.js' })
+// send message or inject script
+chrome.commands.onCommand.addListener(command => {
+  chrome.tabs.query({ active: true }, ([activeTab]) => {
+    if (activeTab) {
+      chrome.tabs.sendMessage(activeTab.id, command, response => {
+        if (response === undefined) {
+          chrome.tabs.executeScript(null, { file: 'toc.js' })
+        }
+      })
+
+    }
+  })
 })
 
-// start toc or send commands to content script
-chrome.commands.onCommand.addListener(command => {
-  if (command === 'toggle') {
-    chrome.tabs.executeScript(null, { file: 'toc.js' })
-  } else {
-    chrome.tabs.query({ active: true }, ([active]) => {
-      if (active) {
-        chrome.tabs.sendMessage(active.id, command)
-      }
-    })
+// notification on update
+chrome.runtime.onInstalled.addListener(function(details) {
+  if (details.reason == 'update') {
+    const curVer = chrome.runtime.getManifest().version
+    const updateMsg = window.updateHistory[curVer]
+    const prevVer = details.previousVersion
+    if (curVer !== prevVer && updateMsg) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: './icon.png',
+        title: `Smart TOC upgraded to ${curVer}`,
+        message: updateMsg
+      })
+    }
   }
 })

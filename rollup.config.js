@@ -13,6 +13,12 @@ let cssToast = JSON.stringify(
   })
 )
 
+let cssHighlight = JSON.stringify(
+  fs.readFileSync('src/style/highlight.css', {
+    encoding: 'utf8'
+  })
+)
+
 export default {
   entry: 'src/js/index.js',
   format: 'iife',
@@ -22,6 +28,7 @@ export default {
     replace({
       __CSS_TOC__: cssToc,
       __CSS_TOAST__: cssToast,
+      __CSS_HIGHLIGHT__: cssHighlight,
       __DEV__: !!process.env.DEV
     })
   ]
