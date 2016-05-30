@@ -2,11 +2,11 @@ import extract from './extract'
 import createTOC from './toc'
 import { toast, highlight } from './util'
 
-let toc
+let toc = null
 const [article, headings] = extract(document)
-const toggle = function() {
+const start = function() {
   if (article && headings && headings.length) {
-    toc = createTOC(article, headings)
+    return createTOC(article, headings)
   } else {
     if (article) {
       highlight(article)
@@ -14,20 +14,19 @@ const toggle = function() {
     } else {
       toast('No article is detected')
     }
+    return null
   }
 }
-toc = { toggle }
 
-
-toggle()
-
-
+toc = start()
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     try {
-      if (toc[request]) {
+      if (toc) {
         toc[request]()
+      } else {
+        toc = start()
       }
       sendResponse(true)
     } catch (e) {

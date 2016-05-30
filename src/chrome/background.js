@@ -1,16 +1,16 @@
 const action = function(command) {
-  chrome.tabs.query({ active: true }, ([activeTab]) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, ([activeTab]) => {
     if (activeTab) {
       chrome.tabs.sendMessage(activeTab.id, command, response => {
         if (response === undefined && command === 'toggle') {
-          chrome.tabs.executeScript(null, { file: 'toc.js' })
+          chrome.tabs.executeScript(activeTab.id, { file: 'toc.js' })
         }
       })
     }
   })
 }
 chrome.browserAction.onClicked.addListener(tab => action('toggle'))
-chrome.commands.onCommand.addListener(action)
+chrome.commands.onCommand.addListener(command => action(command))
 
 
 // notification on update
