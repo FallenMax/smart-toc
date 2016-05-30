@@ -1,13 +1,26 @@
-// send message or inject script
-chrome.commands.onCommand.addListener(command => {
+// click on button
+chrome.browserAction.onClicked.addListener(tab => {
   chrome.tabs.query({ active: true }, ([activeTab]) => {
     if (activeTab) {
-      chrome.tabs.sendMessage(activeTab.id, command, response => {
+      chrome.tabs.sendMessage(activeTab.id, 'toggle', response => {
         if (response === undefined) {
           chrome.tabs.executeScript(null, { file: 'toc.js' })
         }
       })
+    }
+  })
+})
 
+
+// shortcuts
+chrome.commands.onCommand.addListener(command => {
+  chrome.tabs.query({ active: true }, ([activeTab]) => {
+    if (activeTab) {
+      chrome.tabs.sendMessage(activeTab.id, command, response => {
+        if (response === undefined && command === 'toggle') {
+          chrome.tabs.executeScript(null, { file: 'toc.js' })
+        }
+      })
     }
   })
 })
