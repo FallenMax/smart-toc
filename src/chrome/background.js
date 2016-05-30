@@ -1,19 +1,4 @@
-// click on button
-chrome.browserAction.onClicked.addListener(tab => {
-  chrome.tabs.query({ active: true }, ([activeTab]) => {
-    if (activeTab) {
-      chrome.tabs.sendMessage(activeTab.id, 'toggle', response => {
-        if (response === undefined) {
-          chrome.tabs.executeScript(null, { file: 'toc.js' })
-        }
-      })
-    }
-  })
-})
-
-
-// shortcuts
-chrome.commands.onCommand.addListener(command => {
+const action = function(command) {
   chrome.tabs.query({ active: true }, ([activeTab]) => {
     if (activeTab) {
       chrome.tabs.sendMessage(activeTab.id, command, response => {
@@ -23,7 +8,10 @@ chrome.commands.onCommand.addListener(command => {
       })
     }
   })
-})
+}
+chrome.browserAction.onClicked.addListener(tab => action('toggle'))
+chrome.commands.onCommand.addListener(action)
+
 
 // notification on update
 chrome.runtime.onInstalled.addListener(function(details) {
