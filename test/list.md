@@ -12,8 +12,6 @@ https://diversity.github.com/
 http://mobxjs.github.io/mobx/#introduction
 
 
-https://ponyfoo.com/articles/understanding-javascript-async-await
-
 http://paperjs.org/reference/raster/#Remove-On-Event
 
-FIX: http://threejs.org/docs/index.html#Cameras
+http://threejs.org/docs/index.html#Cameras
