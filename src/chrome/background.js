@@ -3,7 +3,10 @@ const action = function(command) {
     if (activeTab) {
       chrome.tabs.sendMessage(activeTab.id, command, response => {
         if (response === undefined && command === 'toggle') {
-          chrome.tabs.executeScript(activeTab.id, { file: 'toc.js' })
+          chrome.tabs.executeScript(activeTab.id, {
+            file: 'toc.js',
+            allFrames: true
+          })
         }
       })
     }

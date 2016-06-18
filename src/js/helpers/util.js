@@ -1,3 +1,7 @@
+import toastCSS from '../../style/toast.css'
+import highlightCSS from '../../style/highlight.css'
+
+
 export function log() {
   if (__DEV__) {
     console.log.apply(console, arguments)
@@ -34,7 +38,7 @@ export function throttle(fn, delay) {
     let timer
     return function timerThrottled(...args) {
       clearTimeout(timer)
-      timer = window.setTimeout(function() {
+      timer = setTimeout(function() {
         fn(...args)
       }, delay)
     }
@@ -42,7 +46,7 @@ export function throttle(fn, delay) {
     let request
     return function rafThrottled(...args) {
       cancelAnimationFrame(request)
-      request = window.requestAnimationFrame(function() {
+      request = requestAnimationFrame(function() {
         fn(...args)
       })
     }
@@ -64,52 +68,6 @@ export const unique = (function uniqueGenerator() {
     return str
   }
 })()
-
-// a stupid implementation of observable
-export function Stream(initial, id = '') {
-  let value = initial
-  const listeners = []
-
-  function stream(val) {
-    if (val !== undefined) {
-      value = val
-      listeners.forEach(l => l(value))
-    }
-    return value
-  }
-  stream.subscribe = function(cb) {
-    cb(value)
-    listeners.push(cb)
-    return stream
-  }
-  stream.id = id
-  return stream
-}
-
-Stream.combine = function(streams, reducer = (...values) => [...values], id) {
-  let cached = streams.map(s => s())
-  let $combined = Stream(reducer(...cached), id)
-  streams.forEach((stream, i) => {
-    stream.subscribe(val => {
-      cached[i] = val
-      $combined(reducer(...cached))
-    })
-  })
-  return $combined
-}
-
-Stream.unique = function($stream, id) {
-  let lastValue = $stream()
-  let $unique = Stream(lastValue, id)
-  $stream.subscribe(val => {
-    if (val !== lastValue) {
-      $unique(val)
-      lastValue = val
-    }
-  })
-  return $unique
-}
-
 
 export const scrollTo = (function scrollToFactory() {
   let request
@@ -180,13 +138,7 @@ export function translate3d(x = 0, y = 0, z = 0) {
 }
 
 export const highlight = function(elem, duration = 10) {
-  if (!document.getElementById('smarttoc_highlight_css')) {
-    let style = document.createElement('STYLE')
-    style.type = 'text/css'
-    style.id = 'smarttoc_highlight_css'
-    style.textContent = __CSS_HIGHLIGHT__.replace(/;/g, ' !important;') // will be replaced when built
-    document.head.appendChild(style)
-  }
+  insertCSS(highlightCSS, 'smarttoc-highlight__css')
   const set = (names, delay) =>
     setTimeout(() => {
       elem.className = [].slice.apply(elem.classList)
@@ -208,17 +160,13 @@ export const toast = (function toastFactory() {
   let timers = []
   return function toast(msg) {
     let toast
+    insertCSS(toastCSS, 'smarttoc-toast__css')
     if (document.getElementById('smarttoc-toast')) {
       toast = document.getElementById('smarttoc-toast')
     } else {
       toast = document.createElement('DIV')
       toast.id = 'smarttoc-toast'
       document.body.appendChild(toast)
-      let style = document.createElement('STYLE')
-      style.type = 'text/css'
-      style.id = 'smarttoc_toast_css'
-      style.textContent = __CSS_TOAST__.replace(/;/g, ' !important;') // will be replaced when built
-      document.head.appendChild(style)
     }
     toast.textContent = msg
 
@@ -238,3 +186,14 @@ export const toast = (function toastFactory() {
     ]
   }
 })()
+
+export const insertCSS = function(css, id) {
+  if (!document.getElementById(id)) {
+    let style = document.createElement('STYLE')
+    style.type = 'text/css'
+    style.id = id
+    style.textContent = css.replace(/;/g, ' !important;')
+    document.head.appendChild(style)
+    return
+  }
+}

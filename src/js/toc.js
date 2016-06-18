@@ -1,11 +1,100 @@
-import { px, num, log, draw, throttle, scrollTo, unique, safe, highlight, translate3d, applyStyle, Stream } from './util'
+import { insertCSS, px, num, log, draw, throttle, scrollTo, unique, safe, highlight, translate3d, applyStyle } from './helpers/util'
+import tocCSS from '../style/toc.css'
+import Stream from './helpers/stream'
 
-const createHandle = function() {
-  let handle = document.createElement('DIV')
-  handle.textContent = 'table of content'
-  handle.classList.add('handle')
-  return handle
+const relayoutStream = function(article, $resize, $isShow) {
+  const readableStyle = function(article) {
+    let computed = window.getComputedStyle(article)
+    let fontSize = num(computed.fontSize)
+    let bestWidth = Math.min(Math.max(fontSize, 12), 16) * 66
+    return Object.assign(
+      (num(computed.marginLeft) || num(computed.marginRight)) ? {} : {
+        marginLeft: 'auto',
+        marginRight: 'auto'
+      },
+      num(computed.maxWidth) ? {} : {
+        maxWidth: bestWidth
+      }
+    )
+  }
+  let oldStyle = article.style.cssText
+  let newStyle = readableStyle(article)
+  let $relayout = $isShow.map(isShow => {
+    if (isShow) {
+      applyStyle(article, newStyle)
+      return article
+    } else {
+      applyStyle(article, oldStyle)
+    }
+  })
+  return Stream.combine($relayout, $resize, () => null)
 }
+
+const addAnchors = function(headings) {
+  const anchoredHeadings = headings.map(function({ node, level }) {
+    let anchor = node.id || [].slice.apply(node.children)
+      .filter(elem => elem.tagName === 'A')
+      .map(a => {
+        let href = a.getAttribute('href') || ''
+        return href.startsWith('#') ? href.substr(1) : a.id
+      })
+      .filter(Boolean)[0]
+    if (!anchor) {
+      anchor = node.id = unique(safe(node.textContent))
+    } else {
+      anchor = unique(anchor)
+    }
+    return { node, level, anchor }
+  })
+  return anchoredHeadings
+}
+
+const getScrollParent = function(elem) {
+  const canScroll = el =>
+    (['auto', 'scroll'].includes(window.getComputedStyle(el).overflowY) &&
+      (el.clientHeight + 1 < el.scrollHeight))
+  while (elem && (elem !== document.body) && !canScroll(elem)) {
+    elem = elem.parentElement
+  }
+  log('scrollable', elem)
+  draw(elem, 'purple')
+  return elem
+}
+
+const scrollStream = function(scrollable, $isShow) {
+  let $scroll = Stream([scrollable.scrollLeft, scrollable.scrollTop])
+  let source = scrollable === document.body ? window : scrollable
+  Stream.fromEvent(source, 'scroll')
+    .filter(() => $isShow())
+    .throttle()
+    .subscribe(() => {
+      $scroll([scrollable.scrollLeft, scrollable.scrollTop])
+    })
+  return $scroll
+}
+
+const activeHeadingStream = function(headings, $scroll, $relayout) {
+  let $headingYs = $relayout.map(() => {
+    let scrollY = window.scrollY // FIXME
+    return headings.map(({ node }) => [
+      scrollY + node.getBoundingClientRect().top,
+      scrollY + node.getBoundingClientRect().bottom
+    ])
+  })
+
+  let $curIndex = Stream.combine($headingYs, $scroll, function(headingYs, [scrollX, scrollY]) {
+    let i = 0
+    for (let len = headingYs.length; i < len; i++) {
+      if (headingYs[i][0] > scrollY + 40) {
+        break
+      }
+    }
+    return Math.max(0, i - 1)
+  })
+
+  return $curIndex.unique()
+}
+
 
 const createHeadingDOM = function(headings) {
   function toTree(headings) {
@@ -70,105 +159,10 @@ const createHeadingDOM = function(headings) {
   return dom
 }
 
-const createContainer = function() {
-  let container = document.createElement('DIV')
-  container.id = 'smarttoc'
-  return container
-}
-
-const insertCSS = function() {
-  let style = document.createElement('STYLE')
-  style.type = 'text/css'
-  style.id = 'smarttoc_css'
-  style.textContent = __CSS_TOC__.replace(/;/g, ' !important;') // will be replaced when built
-  document.head.appendChild(style)
-  return
-}
-
-const addAnchors = function(headings) {
-  const anchoredHeadings = headings.map(function({ node, level }, i) {
-    let anchor = node.id || [].slice.apply(node.children)
-      .filter(elem => elem.tagName === 'A')
-      .map(a => {
-        let href = a.getAttribute('href') || ''
-        return href.startsWith('#') ? href.substr(1) : a.id
-      })
-      .filter(Boolean)[0]
-    if (!anchor) {
-      anchor = node.id = unique(safe(node.textContent))
-    } else {
-      anchor = unique(anchor)
-    }
-    return { node, level, anchor }
-  })
-  return anchoredHeadings
-}
-
-// find first parent elems that can scroll, or document.body
-const getScrollParent = function(elem) {
-  const canScroll = el => {
-    return ['auto', 'scroll'].includes(window.getComputedStyle(el).overflowY) && (el.clientHeight + 1 <
-      el.scrollHeight)
-  }
-  while (elem && (elem !== document.body) && !canScroll(elem)) {
-    elem = elem.parentElement
-  }
-  log('scrollable', elem)
-  draw(elem, 'purple')
-  return elem
-}
-
-const scrollStream = function(scrollable = window) {
-  let $scrollY = Stream([scrollable.scrollLeft, scrollable.scrollTop]);
-  (scrollable === document.body ? window : scrollable).addEventListener('scroll', throttle(
-    () => {
-      $scrollY([scrollable.scrollLeft, scrollable.scrollTop])
-    }
-  ))
-  return $scrollY
-}
-
-const resizeStream = function() {
-  let $resize = Stream(null)
-  window.addEventListener('resize', throttle(
-    () => $resize(null), 300
-  ))
-  return $resize
-}
-
-// make article slightly easier to read?
-const calcArticleStyle = function(article) {
-  let computed = window.getComputedStyle(article)
-  let articleFontSize = num(computed.fontSize)
-  let bestContentWidth = Math.min(Math.max(articleFontSize, 12), 16) * 66
-  return Object.assign(
-    (num(computed.marginLeft) || num(computed.marginRight)) ? {} : {
-      marginLeft: 'auto',
-      marginRight: 'auto'
-    },
-    num(computed.maxWidth) ? {} : {
-      maxWidth: bestContentWidth
-    }
-  )
-}
-
-// where should us put our shiny toc
-const calcContainerLayout = function(article) {
-  let rect = article.getBoundingClientRect()
-  let [fromLeft, fromRight] = [
-    rect.left + window.scrollX,
-    document.documentElement.offsetWidth - rect.right + window.scrollX
-  ]
-  return {
-    direction: fromLeft > (fromRight + 20) ? 'left' : 'right', // or left ?
-    gap: 50, // from content div
-    topMargin: 50 // from viewport top
-  }
-}
 
 const makeSticky = function(options) {
   let { ref, popper, direction, gap, topMargin, $refChange, $scroll, $offset } = options
-  let $refMetric = Stream.combine([$refChange],
+  let $refMetric = Stream.combine($refChange,
     () => {
       let refRect = ref.getBoundingClientRect()
       return {
@@ -182,7 +176,7 @@ const makeSticky = function(options) {
     }
   )
   let popperMetric = popper.getBoundingClientRect()
-  return Stream.combine([$refMetric, $scroll, $offset],
+  return Stream.combine($refMetric, $scroll, $offset,
     (article, [scrollX, scrollY], [offsetX, offsetY]) => {
       let x = direction === 'right' ? article.right + gap : article.left - gap - popperMetric.width
       x = Math.min(Math.max(0, x), window.innerWidth - popperMetric.width) // restrict to visible area
@@ -195,44 +189,6 @@ const makeSticky = function(options) {
       }
     }
   )
-}
-
-const activeHeadingStream = function($scroll, $articleUpdate, headings) {
-  let $headingYs = Stream.combine([$articleUpdate], function() {
-    let scrollY = window.scrollY
-    return headings.map(({ node }) => [
-      scrollY + node.getBoundingClientRect().top,
-      scrollY + node.getBoundingClientRect().bottom
-    ])
-  })
-
-  let $curIndex = Stream.combine([$headingYs, $scroll], function(headingYs, [scrollX, scrollY]) {
-    let i = 0
-    for (let len = headingYs.length; i < len; i++) {
-      if (headingYs[i][0] > scrollY + 40) {
-        break
-      }
-    }
-    return Math.max(0, i - 1)
-  })
-
-  return Stream.unique($curIndex, 'curIndex')
-}
-
-const updateActiveHeading = function(container, activeIndex) {
-  let activeLIs = [].slice.apply(container.querySelectorAll('.active'))
-  activeLIs.forEach(li => {
-    li.classList.remove('active')
-  })
-  let anchors = [].slice.apply(container.querySelectorAll('a'))
-  let elem = anchors[activeIndex]
-  elem.scrollIntoViewIfNeeded()
-  while (elem !== container) {
-    if (elem.tagName === 'LI') {
-      elem.classList.add('active')
-    }
-    elem = elem.parentNode
-  }
 }
 
 const scrollToHeading = function({ node, anchor }, scrollElem = document.body, shouldPushState = false) {
@@ -250,17 +206,6 @@ const scrollToHeading = function({ node, anchor }, scrollElem = document.body, s
   })
 }
 
-const handleClickHeading = function(container, headings, scrollElem) {
-  function onClick(e) {
-    e.preventDefault()
-    e.stopPropagation()
-    let anchor = e.target.getAttribute('href').substr(1)
-    let { node } = headings.find(heading => (heading.anchor === anchor))
-    scrollToHeading({ node, anchor }, scrollElem, true)
-  }
-  container.addEventListener('click', onClick, true)
-}
-
 const handlePopstate = function(headings) {
   function onPopstate(e) {
     let state = e.state || {}
@@ -276,80 +221,183 @@ const handlePopstate = function(headings) {
   window.addEventListener('popstate', onPopstate)
 }
 
-
-const handleUserDrag = function(handle) {
-  let $userOffset = Stream([0, 0]) // [x, y]
-  let [sClientX, sClientY] = [0, 0]
-  let [sOffsetX, sOffsetY] = [0, 0]
-  const stop = e => {
-    e.stopPropagation()
-    e.preventDefault()
+const calcContainerLayout = function(article) {
+  let rect = article.getBoundingClientRect()
+  let [fromLeft, fromRight] = [
+    rect.left + window.scrollX,
+    document.documentElement.offsetWidth - rect.right + window.scrollX
+  ]
+  return {
+    direction: fromLeft > (fromRight + 20) ? 'left' : 'right', // or left ?
+    gap: 150, // from content div
+    topMargin: 50 // from viewport top
   }
-  const onMouseMove = throttle(e => {
-    stop(e)
-    let [dX, dY] = [e.clientX - sClientX, e.clientY - sClientY]
-    $userOffset([sOffsetX + dX, sOffsetY + dY])
-  })
-  handle.addEventListener('mousedown', e => {
-    if (e.button === 0) {
-      stop(e)
-      sClientX = e.clientX
-      sClientY = e.clientY
-      sOffsetX = $userOffset()[0]
-      sOffsetY = $userOffset()[1]
-      window.addEventListener('mousemove', onMouseMove)
-    }
-  })
-  window.addEventListener('mouseup', () => {
-    window.removeEventListener('mousemove', onMouseMove)
-  })
-  return $userOffset
 }
 
-const isLengthy = function(headings) {
-  return headings.filter(h => (h.level <= 2)).length > 50
+const Handle = function({ $userOffset }) {
+  const handleUserDrag = function(handle, $userOffset) {
+    $userOffset([0, 0]) // [x, y]
+    let [sClientX, sClientY] = [0, 0]
+    let [sOffsetX, sOffsetY] = [0, 0]
+    const stop = e => {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    const onMouseMove = throttle(e => {
+      stop(e)
+      let [dX, dY] = [e.clientX - sClientX, e.clientY - sClientY]
+      $userOffset([sOffsetX + dX, sOffsetY + dY])
+    })
+    handle.addEventListener('mousedown', e => {
+      if (e.button === 0) {
+        stop(e)
+        sClientX = e.clientX
+        sClientY = e.clientY
+        sOffsetX = $userOffset()[0]
+        sOffsetY = $userOffset()[1]
+        window.addEventListener('mousemove', onMouseMove)
+      }
+    })
+    window.addEventListener('mouseup', () => {
+      window.removeEventListener('mousemove', onMouseMove)
+    })
+  }
+
+  let handle = document.createElement('DIV')
+  handle.textContent = 'table of content'
+  handle.classList.add('handle')
+  handleUserDrag(handle, $userOffset)
+  return handle
+}
+
+const TOC = function({ headings, $activeHeading, onClickHeading }) {
+  const updateActiveHeading = function(container, activeIndex) {
+    let activeLIs = [].slice.apply(container.querySelectorAll('.active'))
+    activeLIs.forEach(li => {
+      li.classList.remove('active')
+    })
+    let anchors = [].slice.apply(container.querySelectorAll('a'))
+    let elem = anchors[activeIndex]
+    elem.scrollIntoViewIfNeeded()
+    while (elem !== container) {
+      if (elem.tagName === 'LI') {
+        elem.classList.add('active')
+      }
+      elem = elem.parentNode
+    }
+  }
+
+  let toc = createHeadingDOM(headings)
+
+  $activeHeading.subscribe(activeIndex => {
+    updateActiveHeading(toc, activeIndex)
+  })
+
+  toc.addEventListener('click', onClickHeading, true)
+  return toc
+}
+
+const Container = function({
+  headings,
+  $activeHeading,
+  $isShow,
+  $userOffset,
+  onClickHeading
+}) {
+
+  let container = document.createElement('DIV')
+  container.id = 'smarttoc'
+  container.appendChild(Handle({ $userOffset }))
+  container.appendChild(TOC({ headings, $activeHeading, onClickHeading }))
+  let isLengthy = headings.filter(h => (h.level <= 2)).length > 50
+  if (isLengthy) {
+    container.classList.add('lengthy')
+  }
+
+  $isShow.subscribe(isShow => {
+    if (!isShow) {
+      container.classList.add('hidden')
+    } else {
+      container.classList.remove('hidden')
+    }
+  })
+
+  return container
+}
+
+const mount = function(parent, elem) {
+  if (!parent.contains(elem)) {
+    parent.appendChild(elem)
+  }
+}
+
+const Extender = function({ headings, scrollable, $isShow, $relayout, $extender }) {
+  // toc: extend body height so we can scroll to the last heading
+  let extender = document.createElement('DIV')
+  extender.id = 'smarttoc-extender'
+  Stream.combine($isShow, $relayout, (isShow) => {
+    setTimeout(() => { // some delay to ensure page is stable ?
+      let lastHeading = headings.slice(-1)[0].node
+      let lastRect = lastHeading.getBoundingClientRect()
+      let extenderHeight = 0
+      if (scrollable === document.body) {
+        let heightBelowLastRect = document.documentElement.scrollHeight -
+          (lastRect.bottom + window.scrollY) - num(extender.style.height) // in case we are there already
+        extenderHeight = isShow ? Math.max(window.innerHeight - lastRect.height - heightBelowLastRect, 0) : 0
+      } else {
+        let scrollRect = scrollable.getBoundingClientRect()
+        let heightBelowLastRect = scrollRect.top + scrollable.scrollHeight - scrollable.scrollTop // bottom of scrollable relative to viewport
+          -
+          lastRect.bottom - num(extender.style.height) // in case we are there already
+        extenderHeight = isShow ? Math.max(scrollRect.height - lastRect.height - heightBelowLastRect, 0) : 0
+      }
+      $extender({
+        height: extenderHeight
+      })
+    }, 300)
+  })
+  return extender
 }
 
 export default function createTOC(article, headings) {
 
+  headings = addAnchors(headings)
   const scrollable = getScrollParent(article)
 
-  // headings: they might need some <a>nchors
-  headings = addAnchors(headings)
-
-  // set up basic events
   const $isShow = Stream(true)
-  const $scroll = Stream.combine([$isShow, scrollStream(scrollable)],
-    (isShow, scroll) => (isShow ? scroll : undefined)
-  )
-  const $resize = Stream.combine([$isShow, resizeStream()],
-    (isShow, resize) => (isShow ? resize : undefined)
-  )
+  const $resize = Stream.fromEvent(window, 'resize')
+    .filter(() => $isShow())
+    .throttle(300)
+  const $scroll = scrollStream(scrollable, $isShow)
+  const $relayout = relayoutStream(article, $resize, $isShow)
+  const $activeHeading = activeHeadingStream(headings, $scroll, $relayout)
 
-  // article: apply some style
-  const oldArticleStyle = article.style.cssText
-  const newArticleStyle = calcArticleStyle(article)
-  const $articleUpdate = Stream.combine([$isShow, $resize],
-    (isShow) => {
-      applyStyle(article, isShow ? newArticleStyle : oldArticleStyle)
-      return isShow ? null : undefined // do not trigger further updates if not shown
-    }
-  )
+  const $extender = Stream()
+  const extender = Extender({ headings, scrollable, $isShow, $relayout, $extender })
+  scrollable.appendChild(extender)
+  $extender.subscribe(style => applyStyle(extender, style))
 
-  // toc: generate one!
-  insertCSS()
-  const container = createContainer()
-  const handle = createHandle()
-  const toc = createHeadingDOM(headings)
-  container.appendChild(handle)
-  container.appendChild(toc)
-  document.body.appendChild(container)
-  if (isLengthy(headings)) {
-    container.classList.add('lengthy')
+
+
+  const onClickHeading = function(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    const anchor = e.target.getAttribute('href').substr(1)
+    const { node } = headings.find(heading => (heading.anchor === anchor))
+    scrollToHeading({ node, anchor }, scrollable)
   }
 
-  // toc: allow user drag around
-  const $userOffset = handleUserDrag(handle)
+  const $userOffset = Stream()
+
+  insertCSS(tocCSS, 'smarttoc__css')
+  const container = Container({
+    headings,
+    $activeHeading,
+    $isShow,
+    $userOffset,
+    onClickHeading
+  })
+  mount(document.body, container)
 
   // toc: position (be sticky!)
   const containerLayout = calcContainerLayout(article)
@@ -359,57 +407,19 @@ export default function createTOC(article, headings) {
     direction: containerLayout.direction,
     gap: containerLayout.gap,
     topMargin: containerLayout.topMargin,
-    $refChange: $articleUpdate,
+    $refChange: $relayout,
     $scroll: $scroll,
     $offset: $userOffset
   })
-  $containerStyle.subscribe(style => applyStyle(container, style, true))
 
-  // toc: highlight current heading
-  const $activeHeading = activeHeadingStream($scroll, $articleUpdate, headings)
-  $activeHeading.subscribe(activeIndex => {
-    updateActiveHeading(container, activeIndex)
-  })
-
-  // toc: extend body height so we can scroll to the last heading
-  let extender = document.createElement('DIV')
-  extender.id = 'smarttoc-extender'
-  scrollable.appendChild(extender)
-  Stream.combine([$isShow, $articleUpdate],
-    (isShow) => {
-      let lastHeading = headings.slice(-1)[0].node
-      let lastRect = lastHeading.getBoundingClientRect()
-      let extenderHeight = 0
-      if (scrollable === document.body) {
-        let heightBelowLastRect = document.documentElement.scrollHeight - (lastRect.bottom + window.scrollY) - num(
-            extender.style.height) // in case we are there already
-        extenderHeight = isShow ? Math.max(window.innerHeight - lastRect.height - heightBelowLastRect, 0) : 0
-      } else {
-        let scrollRect = scrollable.getBoundingClientRect()
-        let heightBelowLastRect = scrollRect.top + scrollable.scrollHeight - scrollable.scrollTop // bottom of scrollable relative to viewport
-          - lastRect.bottom - num(extender.style.height) // in case we are there already
-        extenderHeight = isShow ? Math.max(scrollRect.height - lastRect.height - heightBelowLastRect, 0) : 0
-      }
-      applyStyle(extender, {
-        height: extenderHeight
-      })
-    }
+  $containerStyle.subscribe(style =>
+    applyStyle(container, style, true)
   )
 
-  // toc: when anchor clicked, scroll (smoothly) to heading
-  handleClickHeading(toc, headings, scrollable)
 
-  // toc: also respond to 'back/forward'
-  handlePopstate(headings)
 
-  // toc: allow user to toggle on/off
-  $isShow.subscribe(isShow => {
-    if (!isShow) {
-      container.classList.add('hidden')
-    } else {
-      container.classList.remove('hidden')
-    }
-  })
+  // // toc: also respond to 'back/forward'
+  // handlePopstate(headings)
 
   // now show what we've found
   if (article.getBoundingClientRect().top > 30) {
@@ -423,6 +433,7 @@ export default function createTOC(article, headings) {
 
 
   return {
+    isShow: () => $isShow(),
     toggle: () => $isShow(!$isShow()),
     next: () => {
       if ($isShow()) {
@@ -435,6 +446,10 @@ export default function createTOC(article, headings) {
         let prevIdx = Math.max(0, $activeHeading() - 1)
         scrollToHeading(headings[prevIdx], scrollable)
       }
+    },
+    dispose: () => {
+      console.log('dispose')
+      container && container.remove()
     }
   }
 }

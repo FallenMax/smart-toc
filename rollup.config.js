@@ -1,23 +1,5 @@
 import replace from 'rollup-plugin-replace'
-import fs from 'fs'
-
-let cssToc = JSON.stringify(
-  fs.readFileSync('src/style/toc.css', {
-    encoding: 'utf8'
-  })
-)
-
-let cssToast = JSON.stringify(
-  fs.readFileSync('src/style/toast.css', {
-    encoding: 'utf8'
-  })
-)
-
-let cssHighlight = JSON.stringify(
-  fs.readFileSync('src/style/highlight.css', {
-    encoding: 'utf8'
-  })
-)
+import string from 'rollup-plugin-string'
 
 export default {
   entry: 'src/js/index.js',
@@ -25,11 +7,7 @@ export default {
   moduleName: 'smarttoc',
   dest: 'dist/toc.js',
   plugins: [
-    replace({
-      __CSS_TOC__: cssToc,
-      __CSS_TOAST__: cssToast,
-      __CSS_HIGHLIGHT__: cssHighlight,
-      __DEV__: !!process.env.DEV
-    })
+    string({ include: '**/*.css' }),
+    replace({ __DEV__: !!process.env.DEV })
   ]
 }

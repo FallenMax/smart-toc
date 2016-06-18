@@ -1,37 +1,40 @@
-import extract from './extract'
+import { isMasterFrame } from './helpers/iframe'
 import createTOC from './toc'
-import { toast, highlight } from './util'
+import extract from './helpers/extract'
+import { toast } from './helpers/util'
 
-let toc = null
-const [article, headings] = extract(document)
-const start = function() {
-  if (article && headings && headings.length) {
-    return createTOC(article, headings)
-  } else {
-    if (article) {
-      highlight(article)
-      toast('No headings are found in this article')
+if (isMasterFrame(window)) {
+
+  let article, headings, toc
+  const start = function() {
+    [article, headings] = extract()
+    if (article && headings && headings.length) {
+      toc = createTOC(article, headings)
     } else {
-      toast('No article is detected')
+      toast('No article/headings are detected.')
     }
-    return null
   }
-}
 
-toc = start()
-
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-    try {
-      if (toc) {
-        toc[request]()
-      } else {
-        toc = start()
+  start()
+  setInterval(() => {
+    if (toc && toc.isShow() && !document.body.contains(article)) {
+      toc.dispose()
+      toc = null
+      start()
+    }
+  }, 3000)
+  chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+      try {
+        if (toc) {
+          toc[request]()
+        } else {
+          start()
+        }
+      } catch (e) {
+        console.error(e)
       }
       sendResponse(true)
-    } catch (e) {
-      console.error(e)
-      sendResponse(false)
     }
-  }
-)
+  )
+}

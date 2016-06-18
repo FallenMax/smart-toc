@@ -16,8 +16,8 @@
 
 #smarttoc {
   position: fixed;
-  max-width: 22em;
-  min-width: 15em;
+  max-width: 20em;
+  min-width: 14em;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
   z-index: 1000;
@@ -25,7 +25,7 @@
   background-color: #fff;
   padding: 2em 1.3em 1.3em 1em;
   color: gray;
-  font-size: calc(12px + 0.15vw);
+  font-size: calc(12px + 0.1vw);
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: normal;
@@ -95,10 +95,10 @@
 
 #smarttoc ul {
   line-height: 2;
-  font-size: 1em;
 }
 
 #smarttoc ul a {
+  font-size: 1em;
   padding-left: 1.3em;
 }
 
@@ -119,7 +119,6 @@
 
 #smarttoc ul ul {
   line-height: 1.8;
-  font-size: 1em;
 }
 
 #smarttoc.lengthy ul ul {
@@ -131,6 +130,7 @@
 }
 
 #smarttoc ul ul a {
+  font-size: 1em;
   padding-left: 2.7em;
 }
 
@@ -149,7 +149,6 @@
 #smarttoc ul ul ul {
   line-height: 1.7;
   display: none;
-  font-size: 1em;
 }
 
 #smarttoc ul ul li.active > ul {
@@ -157,6 +156,7 @@
 }
 
 #smarttoc ul ul ul a {
+  font-size: 1em;
   padding-left: 4em;
 }
 

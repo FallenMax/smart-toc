@@ -15,7 +15,7 @@ const isStrongAlsoHeading = function(rootElement = document) {
     // return rootElement.querySelectorAll('p > strong:only-child').length > 3
 }
 
-const extractArticle = function(rootElement = document) {
+export const extractArticle = function(rootElement = document) {
   log('extracting article')
 
   const scores = new Map()
@@ -31,29 +31,24 @@ const extractArticle = function(rootElement = document) {
 
   // weigh nodes by factor: "selector", "distance from this node"
   const weights = {
-    h1: [0, 40, 32, 20, 8, 8],
-    h2: [0, 100, 80, 50, 20, 20],
-    h3: [0, 100, 80, 50, 20, 20],
-    h4: [0, 100, 80, 50, 20, 20],
-    h5: [0, 100, 80, 50, 20, 20],
-    h6: [0, 100, 80, 50, 20, 20],
-    // section: [0, 100, 80, 50, 20, 20],
-    // '.section': [0, 100, 80, 50, 20, 20],
-    article: [100],
-    '.article': [200],
+    h1: [0, 100, 60, 40, 30, 25, 22].map(s => (s * 0.4)),
+    h2: [0, 100, 60, 40, 30, 25, 22],
+    h3: [0, 100, 60, 40, 30, 25, 22],
+    h4: [0, 100, 60, 40, 30, 25, 22],
+    h5: [0, 100, 60, 40, 30, 25, 22],
+    h6: [0, 100, 60, 40, 30, 25, 22],
+    article: [500],
+    '.article': [500],
     '.content': [101],
-    'sidebar': [-200],
-    '.sidebar': [-200],
-    'aside': [-200],
-    '.aside': [-200],
-    'nav': [-200],
-    '.nav': [-200],
-    '.navigation': [-200],
-    '.toc': [-200],
-    '.table-of-contents': [-200]
-  }
-  if (isStrongAlsoHeading(rootElement)) {
-    weights.strong = [0, 100, 80, 50, 20, 20]
+    'sidebar': [-500],
+    '.sidebar': [-500],
+    'aside': [-500],
+    '.aside': [-500],
+    'nav': [-500],
+    '.nav': [-500],
+    '.navigation': [-500],
+    '.toc': [-500],
+    '.table-of-contents': [-500]
   }
   const selectors = Object.keys(weights)
   selectors
@@ -70,7 +65,7 @@ const extractArticle = function(rootElement = document) {
   const reweighted = candicates
     .map(([elem, score]) => [
       elem,
-      score * elem.scrollHeight / (elem.querySelectorAll('a').length || 1),
+      score * Math.log(elem.scrollHeight / (elem.querySelectorAll('a').length || 1)),
       elem.scrollHeight,
       elem.querySelectorAll('a').length
     ])
@@ -85,14 +80,14 @@ const extractArticle = function(rootElement = document) {
   return article
 }
 
-const extractHeadings = function(article) {
+export const extractHeadings = function(article) {
   log('extracting heading')
-  assert(article, 'invalid article')
 
   // what to be considered as headings
   const tags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].concat(
     isStrongAlsoHeading(article) ? 'STRONG' : [])
   const tagWeight = tag => ({ H1: 4, H2: 9, H3: 9, H4: 10, H5: 10, H6: 10, STRONG: 10 }[tag])
+  const isMostlyVisible = headings => (headings.filter(h => h.offsetHeight).length >= headings.length * 0.5)
   const headingGroup = tags.map(tag => [].slice.apply(article.getElementsByTagName(tag)))
     .map((headings, i) => ({
       elems: headings,
@@ -100,6 +95,7 @@ const extractHeadings = function(article) {
       score: headings.length * tagWeight(tags[i])
     }))
     .filter(heading => heading.score >= 10)
+    .filter(heading => isMostlyVisible(heading.elems))
     .slice(0, 3)
 
   // use document sequence
@@ -114,7 +110,7 @@ const extractHeadings = function(article) {
     let node = treeWalker.currentNode
     headings.push({
       node,
-      level: validTags.indexOf(node.tagName) + 1 // 0 as root node level
+      level: validTags.indexOf(node.tagName) + 1
     })
   }
   if (__DEV__) {

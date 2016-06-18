@@ -1,3 +1,0 @@
-- Add: feedback mechanism to collect article extract accuracy?
-- Fix: http://yelouafi.github.io/redux-saga/docs/introduction/BeginnerTutorial.html#objectives-of-this-tutorial
-- Add: test
