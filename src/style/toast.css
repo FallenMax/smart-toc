@@ -13,7 +13,7 @@
   top: 0;
   margin: 1em 2em;
   padding: 1em;
-  z-index: 100;
+  z-index: 10000;
   box-sizing: border-box;
   background-color: #fff;
   border: 1px solid rgba(158, 158, 158, 0.22);
