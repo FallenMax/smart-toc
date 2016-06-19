@@ -30,6 +30,7 @@
   line-height: 1.5;
   font-weight: normal;
   border: 1px solid rgba(158, 158, 158, 0.22);
+  border-radius: 3px;
   -webkit-font-smoothing: subpixel-antialiased;
   font-smoothing: subpixel-antialiased;
 }
