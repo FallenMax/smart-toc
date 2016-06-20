@@ -6,6 +6,12 @@ import { toast } from './helpers/util'
 if (isMasterFrame(window)) {
 
   let article, headings, toc
+
+  const hasChanged = () => (toc &&
+    toc.isShow() &&
+    !(document.body.contains(article) && article.contains(headings[0].node))
+  )
+
   const start = function() {
     [article, headings] = extract()
     if (article && headings && headings.length) {
@@ -17,7 +23,7 @@ if (isMasterFrame(window)) {
 
   start()
   setInterval(() => {
-    if (toc && toc.isShow() && !document.body.contains(article)) {
+    if (hasChanged()) {
       toc.dispose()
       toc = null
       start()
