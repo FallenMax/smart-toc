@@ -236,7 +236,6 @@ const calcContainerLayout = function(article) {
 
 const Handle = function({ $userOffset }) {
   const handleUserDrag = function(handle, $userOffset) {
-    $userOffset([0, 0]) // [x, y]
     let [sClientX, sClientY] = [0, 0]
     let [sOffsetX, sOffsetY] = [0, 0]
     const stop = e => {
@@ -331,8 +330,9 @@ const mount = function(parent, elem) {
   }
 }
 
-const Extender = function({ headings, scrollable, $isShow, $relayout, $extender }) {
-  // toc: extend body height so we can scroll to the last heading
+const Extender = function({ headings, scrollable, $isShow, $relayout }) {
+  const $extender = Stream()
+    // toc: extend body height so we can scroll to the last heading
   let extender = document.createElement('DIV')
   extender.id = 'smarttoc-extender'
   Stream.combine($isShow, $relayout, (isShow) => {
@@ -356,10 +356,11 @@ const Extender = function({ headings, scrollable, $isShow, $relayout, $extender 
       })
     }, 300)
   })
+  $extender.subscribe(style => applyStyle(extender, style))
   return extender
 }
 
-export default function createTOC(article, headings) {
+export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   headings = addAnchors(headings)
   const scrollable = getScrollParent(article)
@@ -372,10 +373,9 @@ export default function createTOC(article, headings) {
   const $relayout = relayoutStream(article, $resize, $isShow)
   const $activeHeading = activeHeadingStream(headings, $scroll, $relayout)
 
-  const $extender = Stream()
-  const extender = Extender({ headings, scrollable, $isShow, $relayout, $extender })
-  scrollable.appendChild(extender)
-  $extender.subscribe(style => applyStyle(extender, style))
+
+  scrollable.appendChild(Extender({ headings, scrollable, $isShow, $relayout }))
+
 
 
 
@@ -387,7 +387,7 @@ export default function createTOC(article, headings) {
     scrollToHeading({ node, anchor }, scrollable)
   }
 
-  const $userOffset = Stream()
+  const $userOffset = Stream(userOffset)
 
   insertCSS(tocCSS, 'smarttoc__css')
   const container = Container({
@@ -422,7 +422,7 @@ export default function createTOC(article, headings) {
   // handlePopstate(headings)
 
   // now show what we've found
-  if (article.getBoundingClientRect().top > 30) {
+  if (article.getBoundingClientRect().top > window.innerHeight - 50) {
     scrollTo({
       targetElem: article,
       scrollElem: scrollable,
@@ -450,6 +450,7 @@ export default function createTOC(article, headings) {
     dispose: () => {
       console.log('dispose')
       container && container.remove()
+      return { userOffset: $userOffset() }
     }
   }
 }

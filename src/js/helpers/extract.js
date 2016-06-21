@@ -52,18 +52,34 @@ export const extractArticle = function(rootElement = document) {
   }
   const selectors = Object.keys(weights)
   selectors
-    .map(selector => [selector, [].slice.apply(rootElement.querySelectorAll(selector))])
-    .forEach(([selector, elems]) =>
+    .map(selector => ({
+      selector: selector,
+      elems: [].slice.apply(rootElement.querySelectorAll(selector))
+    }))
+    .forEach(({ selector, elems }) =>
       elems.forEach(elem =>
         updateScore(elem, weights[selector])
       )
     )
   const sorted = [...scores].sort((a, b) => (b[1] - a[1]))
 
-  // reweigh top 5 nodes by factor:  "take-lots-vertical-space", "contain-less-links"
-  const candicates = sorted.slice(0, 5).filter(Boolean)
+  // reweigh top 5 nodes by factor:  "take-lots-vertical-space", "contain-less-links", "too-narrow"
+  let candicates = sorted.slice(0, 5).filter(Boolean).map(([elem, score]) => ({ elem, score }))
+  let isTooNarrow = e => (e.scrollWidth < 400)
+  candicates.forEach(c => {
+    if (isTooNarrow(c.elem)) {
+      c.isNarrow = true
+      candicates.forEach(parent => {
+        if (parent.elem.contains(c.elem)) {
+          parent.isNarrow = true
+        }
+      })
+    }
+  })
+  candicates = candicates.filter(c => !c.isNarrow)
+
   const reweighted = candicates
-    .map(([elem, score]) => [
+    .map(({ elem, score }) => [
       elem,
       score * Math.log(elem.scrollHeight / (elem.querySelectorAll('a').length || 1)),
       elem.scrollHeight,

@@ -12,10 +12,10 @@ if (isMasterFrame(window)) {
     !(document.body.contains(article) && article.contains(headings[0].node))
   )
 
-  const start = function() {
+  const start = function(option = {}) {
     [article, headings] = extract()
     if (article && headings && headings.length) {
-      toc = createTOC(article, headings)
+      toc = createTOC(Object.assign({ article, headings }, option))
     } else {
       toast('No article/headings are detected.')
     }
@@ -24,9 +24,9 @@ if (isMasterFrame(window)) {
   start()
   setInterval(() => {
     if (hasChanged()) {
-      toc.dispose()
+      let state = toc.dispose()
       toc = null
-      start()
+      start(state)
     }
   }, 3000)
   chrome.runtime.onMessage.addListener(
