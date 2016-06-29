@@ -3,14 +3,14 @@ import { throttle } from './util'
 // a stupid implementation of stream
 
 const proto = {
-  subscribe: function(cb, emitOnSubscribe = true) {
+  subscribe(cb, emitOnSubscribe = true) {
     if (emitOnSubscribe && this.value !== undefined) {
       cb(this.value)
     }
     this.listeners.push(cb)
     return this
   },
-  unique: function() {
+  unique() {
     let lastValue = this.value
     let $unique = Stream(lastValue)
     this.subscribe(val => {
@@ -21,13 +21,13 @@ const proto = {
     })
     return $unique
   },
-  map: function(f) {
+  map(f) {
     return Stream.combine(this, f)
   },
-  filter: function(f) {
+  filter(f) {
     return this.map(output => (f(output) ? output : undefined))
   },
-  throttle: function(delay) {
+  throttle(delay) {
     let $throttled = Stream(this.value)
     const emit = throttle(value => $throttled(value), delay)
     return this.subscribe(emit)
