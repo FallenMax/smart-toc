@@ -1,6 +1,4 @@
 import toastCSS from '../../style/toast.css'
-import highlightCSS from '../../style/highlight.css'
-
 
 export function log() {
   if (__DEV__) {
@@ -71,9 +69,9 @@ export const unique = (function uniqueGenerator() {
 
 export const scrollTo = (function scrollToFactory() {
   let request
-  const easeOutQuad = function(t, b, c, d) {
+  const easeOutQuad = function (t, b, c, d) {
     t /= d
-    return -(c - b) * t * (t - 2) + b
+    return -c * t * (t - 2) + b
   }
   return function scrollTo({
     targetElem,

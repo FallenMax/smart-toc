@@ -3,7 +3,7 @@ import { throttle } from './util'
 // a stupid implementation of stream
 const easeOutQuad = function(t, b, c, d) {
   t /= d
-  return -(c - b) * t * (t - 2) + b
+  return -c * t * (t - 2) + b
 }
 
 
@@ -48,7 +48,7 @@ const proto = {
       }
       let progress = (timestamp - startTime) / duration
       if (progress < 1) {
-        let now = easeFn(timestamp - startTime, current, target, duration)
+        let now = easeFn(timestamp - startTime, current, target-current, duration)
         $tweened(now)
         requestAnimationFrame(update)
       } else {
