@@ -76,7 +76,11 @@ const Container = function({
     }
   })
 
-  setTimeout(() => { // after node is mounted
+  setTimeout(() => {
+    // wait until node is mounted
+    // you can addEventListener() BEFORE adding to DOM
+    // but elem.getBoundingRect() will return all zeros
+
     const containerLayout = calcContainerLayout(article)
 
     const $containerStyle = makeSticky({

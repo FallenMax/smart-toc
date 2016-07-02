@@ -73,7 +73,7 @@ export const scrollTo = (function scrollToFactory() {
   let request
   const easeOutQuad = function(t, b, c, d) {
     t /= d
-    return -c * t * (t - 2) + b
+    return -(c - b) * t * (t - 2) + b
   }
   return function scrollTo({
     targetElem,
@@ -83,7 +83,7 @@ export const scrollTo = (function scrollToFactory() {
     easeFn,
     callback
   }) {
-    window.cancelAnimationFrame(request)
+    cancelAnimationFrame(request)
     let rect = targetElem.getBoundingClientRect()
     let endScrollTop = rect.top + scrollElem.scrollTop - topMargin
     let startScrollTop = scrollElem.scrollTop
@@ -100,7 +100,7 @@ export const scrollTo = (function scrollToFactory() {
       let progress = (timestamp - startTime) / duration
       if (progress < 1) {
         scrollElem.scrollTop = ease(timestamp - startTime, startScrollTop, distance, duration)
-        window.requestAnimationFrame(update)
+        requestAnimationFrame(update)
       } else {
         scrollElem.scrollTop = endScrollTop
         if (callback) {
@@ -108,7 +108,7 @@ export const scrollTo = (function scrollToFactory() {
         }
       }
     }
-    window.requestAnimationFrame(update)
+    requestAnimationFrame(update)
   }
 })()
 
@@ -137,24 +137,17 @@ export function translate3d(x = 0, y = 0, z = 0) {
   return `translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${Math.round(z)}px)` // 0.5px => blurred text
 }
 
-export const highlight = function(elem, duration = 10) {
-  insertCSS(highlightCSS, 'smarttoc-highlight__css')
-  const set = (names, delay) =>
-    setTimeout(() => {
-      elem.className = [].slice.apply(elem.classList)
-        .filter(name => !name.startsWith('smarttoc-highlight-'))
-        .concat(names.split(' ')
-          .filter(Boolean)
-          .map(name => 'smarttoc-highlight-' + name))
-        .join(' ')
+function setClass(elem, names, delay) {
+  if (delay === undefined) {
+    elem.classList = names
+  } else {
+    return setTimeout(() => {
+      elem.classList = names
     }, delay)
-
-  elem.classList.add('smarttoc-highlight-enter')
-  set('enter enter-active', 0)
-  set('leave', duration)
-  set('leave leave-active', duration + 16)
-  set('', duration + 2000)
+  }
 }
+
+
 
 export const toast = (function toastFactory() {
   let timers = []
@@ -173,9 +166,7 @@ export const toast = (function toastFactory() {
     timers.forEach(clearTimeout)
     toast.classList = ''
 
-    const set = (names, delay) => setTimeout(() => {
-      toast.classList = names
-    }, delay)
+    const set = setClass.bind(null, toast)
 
     toast.classList = 'enter'
     timers = [
