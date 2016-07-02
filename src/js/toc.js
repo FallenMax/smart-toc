@@ -1,4 +1,4 @@
-import { insertCSS, px, num, log, draw, throttle, scrollTo, unique, safe, highlight, translate3d, applyStyle } from './helpers/util'
+import { insertCSS, px, num, log, draw, throttle, scrollTo, unique, safe, translate3d, applyStyle } from './helpers/util'
 import tocCSS from '../style/toc.css'
 import Stream from './helpers/stream'
 
@@ -198,7 +198,6 @@ const scrollToHeading = function({ node, anchor }, scrollElem = document.body, s
     topMargin: 30,
     maxDuration: 300,
     callback: () => {
-      // highlight(node)  // shoud we ?
       if (shouldPushState) {
         history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
       }
@@ -433,6 +432,9 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
 
   return {
+    isValid: () =>
+      document.body.contains(article) &&
+      article.contains(headings[0].node),
     isShow: () => $isShow(),
     toggle: () => $isShow(!$isShow()),
     next: () => {
