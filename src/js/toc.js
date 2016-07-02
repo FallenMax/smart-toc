@@ -97,21 +97,45 @@ const activeHeadingStream = function(headings, $scroll, $relayout) {
   return $curIndex.unique()
 }
 
-const scrollToHeading = function({ node, anchor },
+const scrollToHeading = function({ node },
   scrollElem = document.body,
-  shouldPushState = false
+  onScrollEnd,
+  topMargin = 30
 ) {
   scrollTo({
     targetElem: node,
     scrollElem: scrollElem,
-    topMargin: 30,
+    topMargin: topMargin,
     maxDuration: 300,
-    callback: () => {
-      if (shouldPushState) {
-        history.pushState({ 'smart-toc': true, anchor }, null, '#' + anchor)
-      }
-    }
+    callback: onScrollEnd && onScrollEnd.bind(null, node)
   })
+}
+
+const detectTopBar = function(topElem) {
+  const findFixedParent = function(elem) {
+    const isFixed = elem => {
+      let { position, zIndex } = window.getComputedStyle(elem)
+      return position === 'fixed' && zIndex
+    }
+    while (elem !== document.body && !isFixed(elem)) {
+      elem = elem.parentElement
+    }
+    return elem === document.body ? null : elem
+  }
+  let { left, right, top } = topElem.getBoundingClientRect()
+  let leftTopmost = document.elementFromPoint(left + 1, top + 1)
+  let rightTopmost = document.elementFromPoint(right - 1, top + 1)
+  if (leftTopmost !== topElem && rightTopmost !== topElem) {
+    let leftFixed = findFixedParent(leftTopmost)
+    let rightFixed = findFixedParent(rightTopmost)
+    if (leftFixed === rightFixed) {
+      return leftFixed.offsetHeight
+    } else {
+      return 0
+    }
+  } else {
+    return 0
+  }
 }
 
 export default function createTOC({ article, headings, userOffset = [0, 0] }) {
@@ -127,17 +151,27 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   const $relayout = relayoutStream(article, $resize, $isShow)
   const $activeHeading = activeHeadingStream(headings, $scroll, $relayout)
   const $userOffset = Stream(userOffset)
+  let topbarHeight
 
 
   scrollable.appendChild(Extender({ headings, scrollable, $isShow, $relayout }))
 
 
+  const onScrollEnd = function(node) {
+    if (topbarHeight == null) {
+      topbarHeight = detectTopBar(node)
+      if (topbarHeight) {
+        scrollToHeading({ node }, scrollable, null, topbarHeight + 30)
+      }
+    }
+  }
+
   const onClickHeading = function(e) {
     e.preventDefault()
     e.stopPropagation()
     const anchor = e.target.getAttribute('href').substr(1)
-    const { node } = headings.find(heading => (heading.anchor === anchor))
-    scrollToHeading({ node, anchor }, scrollable)
+    const heading = headings.find(heading => (heading.anchor === anchor))
+    scrollToHeading(heading, scrollable, onScrollEnd, (topbarHeight || 0) + 30)
   }
 
 
@@ -181,19 +215,20 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     next: () => {
       if ($isShow()) {
         let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
-        scrollToHeading(headings[nextIdx], scrollable)
+        scrollToHeading(headings[nextIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 30)
       }
     },
 
     prev: () => {
       if ($isShow()) {
         let prevIdx = Math.max(0, $activeHeading() - 1)
-        scrollToHeading(headings[prevIdx], scrollable)
+        scrollToHeading(headings[prevIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 30)
       }
     },
 
     dispose: () => {
-      console.log('dispose')
+      log('dispose')
+      $isShow(false)
       container && container.remove()
       return { userOffset: $userOffset() }
     }
