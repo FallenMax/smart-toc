@@ -72,7 +72,7 @@ Stream.interval = function(int) {
 
 Stream.fromEvent = function(elem, type) {
   let $event = Stream()
-  elem.addEventListener(type, e => $event(e))
+  elem.addEventListener(type, $event)
   return $event
 }
 

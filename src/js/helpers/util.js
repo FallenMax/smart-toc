@@ -197,3 +197,10 @@ export const insertCSS = function(css, id) {
     return
   }
 }
+
+
+export const mount = function(parent, elem) {
+  if (!parent.contains(elem)) {
+    parent.appendChild(elem)
+  }
+}
