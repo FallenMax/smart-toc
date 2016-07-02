@@ -11,6 +11,10 @@ window.updateHistory = (function() {
 2. Works on sites using iframe
 3. Fix: cannot scroll to bottom on some sites
 3. Smaller font size
+
+0.3:
+1. Detect fixed topbar so first heading will not be covered
+2. Comments area now less likely to be taken as article
 `
 
   return history.split(/\n\n+/).filter(Boolean)
