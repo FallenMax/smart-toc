@@ -19,3 +19,5 @@ http://threejs.org/docs/index.html#Cameras
 
 http://www.cnblogs.com/nankezhishi/archive/2012/06/09/getandpost.html
 #cnblogs_post_body
+
+http://www.zenspider.com/Languages/Ruby/QuickRef.html

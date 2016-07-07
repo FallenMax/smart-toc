@@ -65,13 +65,13 @@ export const extractArticle = function(rootElement = document) {
 
   // reweigh top 5 nodes by factor:  "take-lots-vertical-space", "contain-less-links", "too-narrow"
   let candicates = sorted.slice(0, 5).filter(Boolean).map(([elem, score]) => ({ elem, score }))
-  let isTooNarrow = e => (e.scrollWidth < 400)
+  let isTooNarrow = e => (e.scrollWidth < 400) // rule out sidebars
   candicates.forEach(c => {
     if (isTooNarrow(c.elem)) {
       c.isNarrow = true
       candicates.forEach(parent => {
         if (parent.elem.contains(c.elem)) {
-          parent.isNarrow = true
+          parent.score *= 0.7
         }
       })
     }
