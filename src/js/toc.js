@@ -100,7 +100,7 @@ const activeHeadingStream = function(headings, $scroll, $relayout) {
 const scrollToHeading = function({ node },
   scrollElem = document.body,
   onScrollEnd,
-  topMargin = 30
+  topMargin = 0
 ) {
   scrollTo({
     targetElem: node,
@@ -161,7 +161,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     if (topbarHeight == null) {
       topbarHeight = detectTopBar(node)
       if (topbarHeight) {
-        scrollToHeading({ node }, scrollable, null, topbarHeight + 30)
+        scrollToHeading({ node }, scrollable, null, topbarHeight + 10)
       }
     }
   }
@@ -171,7 +171,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     e.stopPropagation()
     const anchor = e.target.getAttribute('href').substr(1)
     const heading = headings.find(heading => (heading.anchor === anchor))
-    scrollToHeading(heading, scrollable, onScrollEnd, (topbarHeight || 0) + 30)
+    scrollToHeading(heading, scrollable, onScrollEnd, (topbarHeight || 0) + 10)
   }
 
 
@@ -215,14 +215,14 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     next: () => {
       if ($isShow()) {
         let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
-        scrollToHeading(headings[nextIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 30)
+        scrollToHeading(headings[nextIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 10)
       }
     },
 
     prev: () => {
       if ($isShow()) {
         let prevIdx = Math.max(0, $activeHeading() - 1)
-        scrollToHeading(headings[prevIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 30)
+        scrollToHeading(headings[prevIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 10)
       }
     },
 
