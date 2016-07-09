@@ -75,7 +75,7 @@ const scrollStream = function(scrollable, $isShow) {
   return $scroll
 }
 
-const activeHeadingStream = function(headings, $scroll, $relayout) {
+const activeHeadingStream = function(headings, $scroll, $relayout, $topbarHeight) {
   let $headingYs = $relayout.map(() => {
     let scrollY = window.scrollY // FIXME
     return headings.map(({ node }) => [
@@ -84,10 +84,10 @@ const activeHeadingStream = function(headings, $scroll, $relayout) {
     ])
   })
 
-  let $curIndex = Stream.combine($headingYs, $scroll, function(headingYs, [scrollX, scrollY]) {
+  let $curIndex = Stream.combine($headingYs, $scroll, $topbarHeight, function(headingYs, [scrollX, scrollY], topbarHeight = 0) {
     let i = 0
     for (let len = headingYs.length; i < len; i++) {
-      if (headingYs[i][0] > scrollY + 40) {
+      if (headingYs[i][0] > scrollY + topbarHeight + 20) {
         break
       }
     }
@@ -144,24 +144,24 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   const scrollable = getScrollParent(article)
 
   const $isShow = Stream(true)
+  const $topbarHeight = Stream()
   const $resize = Stream.fromEvent(window, 'resize')
     .filter(() => $isShow())
     .throttle(300)
   const $scroll = scrollStream(scrollable, $isShow)
   const $relayout = relayoutStream(article, $resize, $isShow)
-  const $activeHeading = activeHeadingStream(headings, $scroll, $relayout)
+  const $activeHeading = activeHeadingStream(headings, $scroll, $relayout, $topbarHeight)
   const $userOffset = Stream(userOffset)
-  let topbarHeight
 
 
   scrollable.appendChild(Extender({ headings, scrollable, $isShow, $relayout }))
 
 
   const onScrollEnd = function(node) {
-    if (topbarHeight == null) {
-      topbarHeight = detectTopBar(node)
-      if (topbarHeight) {
-        scrollToHeading({ node }, scrollable, null, topbarHeight + 10)
+    if ($topbarHeight() == null) {
+      $topbarHeight(detectTopBar(node))
+      if ($topbarHeight()) {
+        scrollToHeading({ node }, scrollable, null, $topbarHeight() + 10)
       }
     }
   }
@@ -171,7 +171,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     e.stopPropagation()
     const anchor = e.target.getAttribute('href').substr(1)
     const heading = headings.find(heading => (heading.anchor === anchor))
-    scrollToHeading(heading, scrollable, onScrollEnd, (topbarHeight || 0) + 10)
+    scrollToHeading(heading, scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
   }
 
 
@@ -215,14 +215,14 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     next: () => {
       if ($isShow()) {
         let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
-        scrollToHeading(headings[nextIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 10)
+        scrollToHeading(headings[nextIdx], scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
       }
     },
 
     prev: () => {
       if ($isShow()) {
         let prevIdx = Math.max(0, $activeHeading() - 1)
-        scrollToHeading(headings[prevIdx], scrollable, onScrollEnd, (topbarHeight || 0) + 10)
+        scrollToHeading(headings[prevIdx], scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
       }
     },
 
