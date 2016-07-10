@@ -4,7 +4,7 @@ import Stream from '../helpers/stream'
 import { translate3d, applyStyle } from '../helpers/util'
 
 const makeSticky = function(options) {
-  let { ref, popper, direction, gap, topMargin, $refChange, $scroll, $offset } = options
+  let { ref, popper, direction, gap, $refChange, $scroll, $offset, $topMargin } = options
   let $refMetric = Stream.combine($refChange,
     () => {
       let refRect = ref.getBoundingClientRect()
@@ -19,8 +19,8 @@ const makeSticky = function(options) {
     }
   )
   let popperMetric = popper.getBoundingClientRect()
-  return Stream.combine($refMetric, $scroll, $offset,
-    (article, [scrollX, scrollY], [offsetX, offsetY]) => {
+  return Stream.combine($refMetric, $scroll, $offset, $topMargin,
+    (article, [scrollX, scrollY], [offsetX, offsetY], topMargin) => {
       let x = direction === 'right' ? article.right + gap : article.left - gap - popperMetric.width
       x = Math.min(Math.max(0, x), window.innerWidth - popperMetric.width) // restrict to visible area
       let y = Math.max(topMargin, article.top - scrollY)
@@ -42,9 +42,7 @@ const calcContainerLayout = function(article) {
     document.documentElement.offsetWidth - rect.right + window.scrollX
   ]
   return {
-    direction: fromLeft > (fromRight + 20) ? 'left' : 'right', // or left ?
-    gap: 150, // from content div
-    topMargin: 50 // from viewport top
+    direction: fromLeft > fromRight + 50 ? 'left' : 'right' // I do like right more
   }
 }
 
@@ -57,6 +55,7 @@ const Container = function({
   $userOffset,
   $relayout,
   $scroll,
+  $topbarHeight,
   onClickHeading
 }) {
   let container = document.createElement('DIV')
@@ -87,8 +86,8 @@ const Container = function({
       ref: article,
       popper: container,
       direction: containerLayout.direction,
-      gap: containerLayout.gap,
-      topMargin: containerLayout.topMargin,
+      gap: 150,
+      $topMargin: $topbarHeight.map(h => ((h || 0) + 50)),
       $refChange: $relayout,
       $scroll: $scroll,
       $offset: $userOffset

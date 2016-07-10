@@ -185,6 +185,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     $userOffset,
     $relayout,
     $scroll,
+    $topbarHeight,
     onClickHeading
   })
   mount(document.body, container)
