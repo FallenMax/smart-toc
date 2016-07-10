@@ -159,10 +159,12 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   const onScrollEnd = function(node) {
     if ($topbarHeight() == null) {
-      $topbarHeight(detectTopBar(node))
-      if ($topbarHeight()) {
-        scrollToHeading({ node }, scrollable, null, $topbarHeight() + 10)
-      }
+      setTimeout(() => {
+        $topbarHeight(detectTopBar(node))
+        if ($topbarHeight()) {
+          scrollToHeading({ node }, scrollable, null, $topbarHeight() + 10)
+        }
+      }, 300)
     }
   }
 
