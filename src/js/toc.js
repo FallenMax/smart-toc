@@ -145,7 +145,13 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   const $isShow = Stream(true)
   const $topbarHeight = Stream()
-  const $resize = Stream.fromEvent(window, 'resize')
+  const $resize = Stream.combine(
+    Stream.fromEvent(window, 'resize'),
+    Stream.fromEvent(document, 'readystatechange'),
+    Stream.fromEvent(document, 'load'),
+    Stream.fromEvent(document, 'DOMContentLoaded'),
+    () => null
+  )
     .filter(() => $isShow())
     .throttle(300)
   const $scroll = scrollStream(scrollable, $isShow)
