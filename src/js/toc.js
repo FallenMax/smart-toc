@@ -84,7 +84,8 @@ const activeHeadingStream = function(headings, $scroll, $relayout, $topbarHeight
     ])
   })
 
-  let $curIndex = Stream.combine($headingYs, $scroll, $topbarHeight, function(headingYs, [scrollX, scrollY], topbarHeight = 0) {
+  let $curIndex = Stream.combine($headingYs, $scroll, $topbarHeight, function(headingYs, [scrollX, scrollY],
+    topbarHeight = 0) {
     let i = 0
     for (let len = headingYs.length; i < len; i++) {
       if (headingYs[i][0] > scrollY + topbarHeight + 20) {
@@ -128,7 +129,7 @@ const detectTopBar = function(topElem) {
   if (leftTopmost !== topElem && rightTopmost !== topElem) {
     let leftFixed = findFixedParent(leftTopmost)
     let rightFixed = findFixedParent(rightTopmost)
-    if (leftFixed === rightFixed) {
+    if (leftFixed && leftFixed === rightFixed) {
       return leftFixed.offsetHeight
     } else {
       return 0
@@ -146,12 +147,12 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   const $isShow = Stream(true)
   const $topbarHeight = Stream()
   const $resize = Stream.combine(
-    Stream.fromEvent(window, 'resize'),
-    Stream.fromEvent(document, 'readystatechange'),
-    Stream.fromEvent(document, 'load'),
-    Stream.fromEvent(document, 'DOMContentLoaded'),
-    () => null
-  )
+      Stream.fromEvent(window, 'resize'),
+      Stream.fromEvent(document, 'readystatechange'),
+      Stream.fromEvent(document, 'load'),
+      Stream.fromEvent(document, 'DOMContentLoaded'),
+      () => null
+    )
     .filter(() => $isShow())
     .throttle()
   const $scroll = scrollStream(scrollable, $isShow)
