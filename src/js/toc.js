@@ -153,7 +153,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     () => null
   )
     .filter(() => $isShow())
-    .throttle(300)
+    .throttle()
   const $scroll = scrollStream(scrollable, $isShow)
   const $relayout = relayoutStream(article, $resize, $isShow)
   const $activeHeading = activeHeadingStream(headings, $scroll, $relayout, $topbarHeight)
