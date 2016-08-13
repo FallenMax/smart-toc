@@ -9,11 +9,10 @@
   },
   "icons": {
     "16": "icon.png",
-    "128": "icon128.png"
+    "128": "icon.png"
   },
   "background": {
     "scripts": [
-      "history.js",
       "background.js"
     ],
     "persistent": false
