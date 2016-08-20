@@ -30,7 +30,7 @@ const Handle = function({ $userOffset }) {
   }
 
   let handle = document.createElement('DIV')
-  handle.textContent = 'table of content'
+  handle.textContent = 'table of contents'
   handle.classList.add('handle')
   handleUserDrag(handle, $userOffset)
   return handle
