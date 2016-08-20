@@ -201,12 +201,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   // now show what we've found
   if (article.getBoundingClientRect().top > window.innerHeight - 50) {
-    scrollTo({
-      targetElem: article,
-      scrollElem: scrollable,
-      topMargin: 30,
-      maxDuration: 600
-    })
+    scrollToHeading(headings[0], scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
   }
 
 
