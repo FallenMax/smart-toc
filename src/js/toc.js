@@ -126,7 +126,7 @@ const detectTopBar = function(topElem) {
   let { left, right, top } = topElem.getBoundingClientRect()
   let leftTopmost = document.elementFromPoint(left + 1, top + 1)
   let rightTopmost = document.elementFromPoint(right - 1, top + 1)
-  if (leftTopmost !== topElem && rightTopmost !== topElem) {
+  if (leftTopmost && rightTopmost && leftTopmost !== topElem && rightTopmost !== topElem) {
     let leftFixed = findFixedParent(leftTopmost)
     let rightFixed = findFixedParent(rightTopmost)
     if (leftFixed && leftFixed === rightFixed) {
