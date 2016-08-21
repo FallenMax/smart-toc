@@ -10,7 +10,7 @@
     "zip": "zip -r smart-toc.zip dist",
     "publish": "npm run clean; npm run build && npm run chrome && npm run zip",
     "dev": "DEV=true chokidar 'src/**' -c 'npm run build' -t 500 --initial",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo 'nothing to test'"
   },
   "repository": {
     "type": "git",
@@ -32,8 +32,8 @@
   "homepage": "https://github.com/FallenMax/smart-toc#readme",
   "devDependencies": {
     "chokidar-cli": "1.2.0",
-    "rollup": "0.25.8",
-    "rollup-plugin-replace": "1.1.0",
-    "rollup-plugin-string": "^2.0.0"
+    "rollup": "0.34.10",
+    "rollup-plugin-replace": "1.1.1",
+    "rollup-plugin-string": "^2.0.2"
   }
 }
