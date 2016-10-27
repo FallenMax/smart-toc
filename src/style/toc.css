@@ -16,7 +16,7 @@
 
 #smarttoc {
   position: fixed;
-  max-width: 20em;
+  max-width: 33vw;
   min-width: 14em;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
@@ -32,6 +32,8 @@
   border: 1px solid rgba(158, 158, 158, 0.22);
   -webkit-font-smoothing: subpixel-antialiased;
   font-smoothing: subpixel-antialiased;
+  overflow-x: hidden;
+  will-change: transform;
 }
 
 #smarttoc.hidden {
@@ -77,6 +79,9 @@
   line-height: 1.3;
   padding-top: 0.2em;
   padding-bottom: 0.2em;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+  white-space: nowrap;
 }
 
 #smarttoc a:hover,
@@ -85,7 +90,7 @@
   color: #563d7c;
 }
 
-#smarttoc li.active> a {
+#smarttoc li.active>a {
   border-left-color: #563d7c;
   color: #563d7c;
 }
@@ -104,13 +109,13 @@
 
 #smarttoc ul a:hover,
 #smarttoc ul a:active,
-#smarttoc ul li.active> a {
+#smarttoc ul li.active>a {
   border-left-width: 3px;
   border-left-style: solid;
   padding-left: calc(1.3em - 3px);
 }
 
-#smarttoc ul li.active> a {
+#smarttoc ul li.active>a {
   font-weight: 700;
 }
 
@@ -125,7 +130,7 @@
   display: none;
 }
 
-#smarttoc.lengthy ul li.active> ul {
+#smarttoc.lengthy ul li.active>ul {
   display: block;
 }
 
@@ -136,7 +141,7 @@
 
 #smarttoc ul ul a:hover,
 #smarttoc ul ul a:active,
-#smarttoc ul ul li.active> a {
+#smarttoc ul ul li.active>a {
   border-left-width: 2px;
   border-left-style: solid;
   padding-left: calc(2.7em - 2px);
@@ -151,7 +156,7 @@
   display: none;
 }
 
-#smarttoc ul ul li.active> ul {
+#smarttoc ul ul li.active>ul {
   display: block;
 }
 
@@ -162,7 +167,7 @@
 
 #smarttoc ul ul ul a:hover,
 #smarttoc ul ul ul a:active,
-#smarttoc ul ul ul li.active> a {
+#smarttoc ul ul ul li.active>a {
   border-left-width: 1px;
   border-left-style: solid;
   padding-left: calc(4em - 1px);
