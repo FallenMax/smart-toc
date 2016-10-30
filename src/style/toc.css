@@ -20,7 +20,7 @@
   min-width: 14em;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 10000;
   box-sizing: border-box;
   background-color: #fff;
   padding: 2em 1.3em 1.3em 1em;
