@@ -69,7 +69,7 @@ export const unique = (function uniqueGenerator() {
 
 export const scrollTo = (function scrollToFactory() {
   let request
-  const easeOutQuad = function (t, b, c, d) {
+  const easeOutQuad = function(t, b, c, d) {
     t /= d
     return -c * t * (t - 2) + b
   }
@@ -181,7 +181,7 @@ export const insertCSS = function(css, id) {
     let style = document.createElement('STYLE')
     style.type = 'text/css'
     style.id = id
-    style.textContent = css.replace(/;/g, ' !important;')
+    style.textContent = css
     document.head.appendChild(style)
     return
   }
