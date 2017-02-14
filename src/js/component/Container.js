@@ -62,6 +62,7 @@ const Container = function({
   container.id = 'smarttoc'
   container.appendChild(Handle({ $userOffset }))
   container.appendChild(TOC({ headings, $activeHeading, onClickHeading }))
+
   let isLengthy = headings.filter(h => (h.level <= 2)).length > 50
   if (isLengthy) {
     container.classList.add('lengthy')

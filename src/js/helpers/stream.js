@@ -3,9 +3,8 @@ import { throttle } from './util'
 // a stupid implementation of stream
 const easeOutQuad = function(t, b, c, d) {
   t /= d
-  return -c * t * (t - 2) + b
+  return (-c) * t * (t - 2) + b
 }
-
 
 const proto = {
   subscribe(cb, emitOnSubscribe = true) {
@@ -30,45 +29,13 @@ const proto = {
     return Stream.combine(this, f)
   },
   filter(f) {
-    return this.map(output => (f(output) ? output : undefined))
+    return this.map(output => f(output) ? output : undefined)
   },
   throttle(delay) {
     let $throttled = Stream(this.value)
     const emit = throttle(value => $throttled(value), delay)
     this.subscribe(emit)
     return $throttled
-  },
-  tween(easeFn = easeOutQuad, duration = 300, cb) {
-    let $tweened = Stream(this.value)
-    let current, target, request, startTime
-
-    function update(timestamp) {
-      if (!startTime) {
-        startTime = timestamp
-      }
-      let progress = (timestamp - startTime) / duration
-      if (progress < 1) {
-        let now = easeFn(timestamp - startTime, current, target-current, duration)
-        $tweened(now)
-        requestAnimationFrame(update)
-      } else {
-        $tweened(target)
-        if (cb) {
-          cb(target)
-        }
-      }
-    }
-
-    function tweenTo(value) {
-      cancelAnimationFrame(request)
-      current = $tweened()
-      target = value
-      startTime = null
-      request = requestAnimationFrame(update)
-    }
-
-    this.unique().subscribe(tweenTo)
-    return $tweened
   }
 }
 
@@ -94,10 +61,13 @@ Stream.combine = function(...streams) {
   let cached = streams.map(s => s())
   let $combined = Stream(reducer(...cached))
   streams.forEach((stream, i) => {
-    stream.subscribe(val => {
-      cached[i] = val
-      $combined(reducer(...cached))
-    }, false)
+    stream.subscribe(
+      val => {
+        cached[i] = val
+        $combined(reducer(...cached))
+      },
+      false
+    )
   })
   return $combined
 }

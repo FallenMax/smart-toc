@@ -112,7 +112,7 @@ const scrollToHeading = function({ node },
   })
 }
 
-const detectTopBar = function(topElem) {
+const getTopBarHeight = function(topElem) {
   const findFixedParent = function(elem) {
     const isFixed = elem => {
       let { position, zIndex } = window.getComputedStyle(elem)
@@ -142,6 +142,8 @@ const detectTopBar = function(topElem) {
 export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   headings = addAnchors(headings)
+  insertCSS(tocCSS, 'smarttoc__css')
+
   const scrollable = getScrollParent(article)
 
   const $isShow = Stream(true)
@@ -167,7 +169,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   const onScrollEnd = function(node) {
     if ($topbarHeight() == null) {
       setTimeout(() => {
-        $topbarHeight(detectTopBar(node))
+        $topbarHeight(getTopBarHeight(node))
         if ($topbarHeight()) {
           scrollToHeading({ node }, scrollable, null, $topbarHeight() + 10)
         }
@@ -182,9 +184,6 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     const heading = headings.find(heading => (heading.anchor === anchor))
     scrollToHeading(heading, scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
   }
-
-
-  insertCSS(tocCSS, 'smarttoc__css')
 
   const container = Container({
     article,
