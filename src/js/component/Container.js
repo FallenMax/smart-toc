@@ -1,7 +1,9 @@
 import TOC from './TOC'
 import Handle from './Handle'
 import Stream from '../helpers/stream'
-import { translate3d, applyStyle } from '../helpers/util'
+import { translate3d, applyStyle, log } from '../helpers/util'
+
+const ARTICLE_TOC_GAP = 150
 
 const makeSticky = function(options) {
   let { ref, popper, direction, gap, $refChange, $scroll, $offset, $topMargin } = options
@@ -35,15 +37,46 @@ const makeSticky = function(options) {
 }
 
 
-const calcContainerLayout = function(article) {
-  let rect = article.getBoundingClientRect()
-  let [fromLeft, fromRight] = [
-    rect.left + window.scrollX,
-    document.documentElement.offsetWidth - rect.right + window.scrollX
-  ]
-  return {
-    direction: fromLeft > fromRight + 50 ? 'left' : 'right' // I do like right more
+const getOptimalContainerPos = function(article) {
+  const { top, left, right, bottom, height, width } = article.getBoundingClientRect()
+
+
+  const depthOf = function(elem) {
+    let depth = 0
+    while (elem) {
+      elem = elem.parentElement
+      depth++
+    }
+    return depth
   }
+  const depthOfPoint = function([x, y]) {
+    const elem = document.elementFromPoint(x, y)
+    return elem && depthOf(elem)
+  }
+  const gap = ARTICLE_TOC_GAP
+  const testWidth = 200
+  const testHeight = 400
+  const leftSlotTestPoints = [left - gap - testWidth, left - gap - testWidth / 2, left - gap]
+    .map(x => [top, top + testHeight / 2, top + testHeight].map(y => [x, y]))
+    .reduce((prev, cur) => prev.concat(cur), [])
+  const rightSlotTestPoints = [right + gap, right + gap + testWidth / 2, right + gap + testWidth]
+    .map(x => [top, top + testHeight / 2, top + testHeight].map(y => [x, y]))
+    .reduce((prev, cur) => prev.concat(cur), [])
+  const leftDepths = leftSlotTestPoints.map(depthOfPoint).filter(Boolean)
+  const rightDepths = rightSlotTestPoints.map(depthOfPoint).filter(Boolean)
+  const leftAvgDepth = leftDepths.length ? leftDepths.reduce((a, b) => a + b, 0) / leftDepths.length : null
+  const rightAvgDepth = rightDepths.length ? rightDepths.reduce((a, b) => a + b, 0) / rightDepths.length : null
+
+  log('rightDepths ', rightDepths)
+  log('rightAvgDepth ', rightAvgDepth)
+  log('leftDepths ', leftDepths)
+  log('leftAvgDepth ', leftAvgDepth)
+  if (!leftAvgDepth) return { direction: 'right' }
+  if (!rightAvgDepth) return { direction: 'left' }
+  const spaceDiff = document.documentElement.offsetWidth - right - left
+  log('spaceDiff ', spaceDiff)
+  const scoreDiff = spaceDiff * 1 + (rightAvgDepth - leftAvgDepth) * 9 * (-10) + 20 // I do like right better
+  return scoreDiff > 0 ? { direction: 'right' } : { direction: 'left' }
 }
 
 
@@ -81,13 +114,13 @@ const Container = function({
     // you can addEventListener() BEFORE adding to DOM
     // but elem.getBoundingRect() will return all zeros
 
-    const containerLayout = calcContainerLayout(article)
+    const { direction } = getOptimalContainerPos(article)
 
     const $containerStyle = makeSticky({
       ref: article,
       popper: container,
-      direction: containerLayout.direction,
-      gap: 150,
+      direction: direction,
+      gap: ARTICLE_TOC_GAP,
       $topMargin: $topbarHeight.map(h => ((h || 0) + 50)),
       $refChange: $relayout,
       $scroll: $scroll,
