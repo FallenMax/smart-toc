@@ -82,7 +82,11 @@ export const extractArticle = function(rootElement = document) {
     .map(({ elem, score }) => [
       elem,
       score *
-        Math.log(elem.scrollHeight / (elem.querySelectorAll('a').length || 1)),
+        Math.log(
+          elem.scrollHeight *
+            elem.scrollHeight /
+            (elem.querySelectorAll('a').length || 1)
+        ),
       elem.scrollHeight,
       elem.querySelectorAll('a').length
     ])
@@ -105,7 +109,7 @@ export const extractHeadings = function(article) {
     isStrongAlsoHeading(article) ? 'STRONG' : []
   )
   const tagWeight = tag =>
-    ({ H1: 4, H2: 9, H3: 9, H4: 10, H5: 10, H6: 10, STRONG: 10 })[tag]
+    ({ H1: 4, H2: 9, H3: 9, H4: 10, H5: 10, H6: 10, STRONG: 10 }[tag])
   const isVisible = elem => elem.offsetHeight !== 0
   const isGroupVisible = headings =>
     headings.filter(isVisible).length >= headings.length * 0.5
