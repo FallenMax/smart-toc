@@ -1,18 +1,14 @@
 import { throttle } from './util'
 
-// a stupid implementation of stream
-const easeOutQuad = function(t, b, c, d) {
-  t /= d
-  return (-c) * t * (t - 2) + b
-}
-
 const proto = {
   subscribe(cb, emitOnSubscribe = true) {
     if (emitOnSubscribe && this.value !== undefined) {
       cb(this.value)
     }
     this.listeners.push(cb)
-    return this
+  },
+  addDependent(dependent) {
+    this.dependents.push(dependent)
   },
   unique() {
     let lastValue = this.value
@@ -29,47 +25,62 @@ const proto = {
     return Stream.combine(this, f)
   },
   filter(f) {
-    return this.map(output => f(output) ? output : undefined)
+    return this.map(output => (f(output) ? output : undefined))
   },
   throttle(delay) {
     let $throttled = Stream(this.value)
-    const emit = throttle(value => $throttled(value), delay)
+    const emit = throttle($throttled, delay)
     this.subscribe(emit)
     return $throttled
   }
 }
 
-const Stream = function Stream(initial) {
+function Stream(init) {
   let s = function(val) {
-    if (val !== undefined) {
-      s.value = val
-      s.listeners.forEach(l => l(s.value))
-    }
-    return s.value
+    if (val === undefined) return s.value
+    s.update(val)
+    s.flush(val)
   }
 
-  s.value = initial
+  s.value = init
+  s.changed = false
+  s.update = val => {
+    s.value = val
+    s.changed = true
+    s.dependents.forEach(dep => dep.update(val))
+  }
+  s.flush = () => {
+    if (s.changed) {
+      s.changed = false
+      s.listeners.forEach(l => l(s.value))
+      s.dependents.forEach(dep => dep.flush())
+    }
+  }
   s.listeners = []
+  s.dependents = []
 
-  Object.assign(s, proto)
-
-  return s
+  return Object.assign(s, proto)
 }
 
 Stream.combine = function(...streams) {
-  let reducer = streams.pop()
+  const combiner = streams.pop()
   let cached = streams.map(s => s())
-  let $combined = Stream(reducer(...cached))
-  streams.forEach((stream, i) => {
-    stream.subscribe(
-      val => {
+  const combined = Stream(combiner(...cached))
+
+  streams.forEach((s, i) => {
+    const dependent = {
+      update(val) {
         cached[i] = val
-        $combined(reducer(...cached))
+        combined.update(combiner(...cached))
       },
-      false
-    )
+      flush() {
+        combined.flush()
+      }
+    }
+    s.addDependent(dependent)
   })
-  return $combined
+
+  return combined
 }
 
 Stream.interval = function(int) {
