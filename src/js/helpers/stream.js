@@ -10,6 +10,18 @@ const proto = {
   addDependent(dependent) {
     this.dependents.push(dependent)
   },
+  update(val) {
+    this.value = val
+    this.changed = true
+    this.dependents.forEach(dep => dep.update(val))
+  },
+  flush() {
+    if (this.changed) {
+      this.changed = false
+      this.listeners.forEach(l => l(this.value))
+      this.dependents.forEach(dep => dep.flush())
+    }
+  },
   unique() {
     let lastValue = this.value
     let $unique = Stream(lastValue)
@@ -44,18 +56,6 @@ function Stream(init) {
 
   s.value = init
   s.changed = false
-  s.update = val => {
-    s.value = val
-    s.changed = true
-    s.dependents.forEach(dep => dep.update(val))
-  }
-  s.flush = () => {
-    if (s.changed) {
-      s.changed = false
-      s.listeners.forEach(l => l(s.value))
-      s.dependents.forEach(dep => dep.flush())
-    }
-  }
   s.listeners = []
   s.dependents = []
 
