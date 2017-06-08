@@ -1,7 +1,7 @@
 import TOC from './TOC'
 import Handle from './Handle'
 import Stream from '../helpers/stream'
-import { translate3d, applyStyle, log } from '../helpers/util'
+import { translate3d, applyStyle, log, num } from '../helpers/util'
 
 const ARTICLE_TOC_GAP = 150
 
@@ -18,7 +18,8 @@ const makeSticky = function(options) {
   } = options
   let $refMetric = Stream.combine($refChange, () => {
     let refRect = ref.getBoundingClientRect()
-    return {
+    let refStyle = window.getComputedStyle(ref)
+    let refMetric = {
       top: refRect.top + window.scrollY,
       right: refRect.right + window.scrollX,
       bottom: refRect.bottom + window.scrollY,
@@ -26,6 +27,13 @@ const makeSticky = function(options) {
       width: refRect.width,
       height: refRect.height
     }
+    if (refStyle['box-sizing'] === 'border-box') {
+      refMetric.left += num(refStyle['padding-left'])
+      refMetric.right -= num(refStyle['padding-right'])
+      refMetric.width -=
+        num(refStyle['padding-left']) + num(refStyle['padding-right'])
+    }
+    return refMetric
   })
   let popperMetric = popper.getBoundingClientRect()
   return Stream.combine(

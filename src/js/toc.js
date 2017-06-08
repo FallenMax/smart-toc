@@ -19,6 +19,10 @@ const relayoutStream = function(article, $resize, $isShow) {
     let computed = window.getComputedStyle(article)
     let fontSize = num(computed.fontSize)
     let bestWidth = Math.min(Math.max(fontSize, 12), 16) * 66
+    if (computed['box-sizing'] === 'border-box') {
+      bestWidth +=
+        num(computed['padding-left']) + num(computed['padding-right'])
+    }
 
     return Object.assign(
       num(computed.marginLeft) || num(computed.marginRight)
