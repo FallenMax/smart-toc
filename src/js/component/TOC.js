@@ -61,7 +61,6 @@ const createHeadingDOM = function(headings) {
   return dom
 }
 
-
 const TOC = function({ headings, $activeHeading, onClickHeading }) {
   const updateActiveHeading = function(container, activeIndex) {
     let activeLIs = [].slice.apply(container.querySelectorAll('.active'))

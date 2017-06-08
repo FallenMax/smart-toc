@@ -1,4 +1,14 @@
-import { insertCSS, num, log, draw, mount, scrollTo, unique, safe, applyStyle } from './helpers/util'
+import {
+  insertCSS,
+  num,
+  log,
+  draw,
+  mount,
+  scrollTo,
+  unique,
+  safe,
+  applyStyle
+} from './helpers/util'
 import tocCSS from '../style/toc.css'
 import Stream from './helpers/stream'
 import Container from './component/Container'
@@ -9,14 +19,19 @@ const relayoutStream = function(article, $resize, $isShow) {
     let computed = window.getComputedStyle(article)
     let fontSize = num(computed.fontSize)
     let bestWidth = Math.min(Math.max(fontSize, 12), 16) * 66
+
     return Object.assign(
-      (num(computed.marginLeft) || num(computed.marginRight)) ? {} : {
-        marginLeft: 'auto',
-        marginRight: 'auto'
-      },
-      num(computed.maxWidth) ? {} : {
-        maxWidth: bestWidth
-      }
+      num(computed.marginLeft) || num(computed.marginRight)
+        ? {}
+        : {
+            marginLeft: 'auto',
+            marginRight: 'auto'
+          },
+      num(computed.maxWidth)
+        ? {}
+        : {
+            maxWidth: bestWidth
+          }
     )
   }
   let oldStyle = article.style.cssText
@@ -34,13 +49,16 @@ const relayoutStream = function(article, $resize, $isShow) {
 
 const addAnchors = function(headings) {
   const anchoredHeadings = headings.map(function({ node, level }) {
-    let anchor = node.id || [].slice.apply(node.children)
-      .filter(elem => elem.tagName === 'A')
-      .map(a => {
-        let href = a.getAttribute('href') || ''
-        return href.startsWith('#') ? href.substr(1) : a.id
-      })
-      .filter(Boolean)[0]
+    let anchor =
+      node.id ||
+      [].slice
+        .apply(node.children)
+        .filter(elem => elem.tagName === 'A')
+        .map(a => {
+          let href = a.getAttribute('href') || ''
+          return href.startsWith('#') ? href.substr(1) : a.id
+        })
+        .filter(Boolean)[0]
     if (!anchor) {
       anchor = node.id = unique(safe(node.textContent))
     } else {
@@ -53,9 +71,9 @@ const addAnchors = function(headings) {
 
 const getScrollParent = function(elem) {
   const canScroll = el =>
-    (['auto', 'scroll'].includes(window.getComputedStyle(el).overflowY) &&
-      (el.clientHeight + 1 < el.scrollHeight))
-  while (elem && (elem !== document.body) && !canScroll(elem)) {
+    ['auto', 'scroll'].includes(window.getComputedStyle(el).overflowY) &&
+    el.clientHeight + 1 < el.scrollHeight
+  while (elem && elem !== document.body && !canScroll(elem)) {
     elem = elem.parentElement
   }
   log('scrollable', elem)
@@ -75,7 +93,12 @@ const scrollStream = function(scrollable, $isShow) {
   return $scroll
 }
 
-const activeHeadingStream = function(headings, $scroll, $relayout, $topbarHeight) {
+const activeHeadingStream = function(
+  headings,
+  $scroll,
+  $relayout,
+  $topbarHeight
+) {
   let $headingYs = $relayout.map(() => {
     let scrollY = window.scrollY // FIXME
     return headings.map(({ node }) => [
@@ -84,8 +107,11 @@ const activeHeadingStream = function(headings, $scroll, $relayout, $topbarHeight
     ])
   })
 
-  let $curIndex = Stream.combine($headingYs, $scroll, $topbarHeight, function(headingYs, [scrollX, scrollY],
-    topbarHeight = 0) {
+  let $curIndex = Stream.combine($headingYs, $scroll, $topbarHeight, function(
+    headingYs,
+    [scrollX, scrollY],
+    topbarHeight = 0
+  ) {
     let i = 0
     for (let len = headingYs.length; i < len; i++) {
       if (headingYs[i][0] > scrollY + topbarHeight + 20) {
@@ -98,7 +124,8 @@ const activeHeadingStream = function(headings, $scroll, $relayout, $topbarHeight
   return $curIndex.unique()
 }
 
-const scrollToHeading = function({ node },
+const scrollToHeading = function(
+  { node },
   scrollElem = document.body,
   onScrollEnd,
   topMargin = 0
@@ -126,7 +153,12 @@ const getTopBarHeight = function(topElem) {
   let { left, right, top } = topElem.getBoundingClientRect()
   let leftTopmost = document.elementFromPoint(left + 1, top + 1)
   let rightTopmost = document.elementFromPoint(right - 1, top + 1)
-  if (leftTopmost && rightTopmost && leftTopmost !== topElem && rightTopmost !== topElem) {
+  if (
+    leftTopmost &&
+    rightTopmost &&
+    leftTopmost !== topElem &&
+    rightTopmost !== topElem
+  ) {
     let leftFixed = findFixedParent(leftTopmost)
     let rightFixed = findFixedParent(rightTopmost)
     if (leftFixed && leftFixed === rightFixed) {
@@ -140,7 +172,6 @@ const getTopBarHeight = function(topElem) {
 }
 
 export default function createTOC({ article, headings, userOffset = [0, 0] }) {
-
   headings = addAnchors(headings)
   insertCSS(tocCSS, 'smarttoc__css')
 
@@ -149,22 +180,25 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   const $isShow = Stream(true)
   const $topbarHeight = Stream()
   const $resize = Stream.combine(
-      Stream.fromEvent(window, 'resize'),
-      Stream.fromEvent(document, 'readystatechange'),
-      Stream.fromEvent(document, 'load'),
-      Stream.fromEvent(document, 'DOMContentLoaded'),
-      () => null
-    )
+    Stream.fromEvent(window, 'resize'),
+    Stream.fromEvent(document, 'readystatechange'),
+    Stream.fromEvent(document, 'load'),
+    Stream.fromEvent(document, 'DOMContentLoaded'),
+    () => null
+  )
     .filter(() => $isShow())
     .throttle()
   const $scroll = scrollStream(scrollable, $isShow)
   const $relayout = relayoutStream(article, $resize, $isShow)
-  const $activeHeading = activeHeadingStream(headings, $scroll, $relayout, $topbarHeight)
+  const $activeHeading = activeHeadingStream(
+    headings,
+    $scroll,
+    $relayout,
+    $topbarHeight
+  )
   const $userOffset = Stream(userOffset)
 
-
   scrollable.appendChild(Extender({ headings, scrollable, $isShow, $relayout }))
-
 
   const onScrollEnd = function(node) {
     if ($topbarHeight() == null) {
@@ -181,8 +215,13 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     e.preventDefault()
     e.stopPropagation()
     const anchor = e.target.getAttribute('href').substr(1)
-    const heading = headings.find(heading => (heading.anchor === anchor))
-    scrollToHeading(heading, scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
+    const heading = headings.find(heading => heading.anchor === anchor)
+    scrollToHeading(
+      heading,
+      scrollable,
+      onScrollEnd,
+      ($topbarHeight() || 0) + 10
+    )
   }
 
   const container = Container({
@@ -200,33 +239,43 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   // now show what we've found
   if (article.getBoundingClientRect().top > window.innerHeight - 50) {
-    scrollToHeading(headings[0], scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
+    scrollToHeading(
+      headings[0],
+      scrollable,
+      onScrollEnd,
+      ($topbarHeight() || 0) + 10
+    )
   }
 
-
   return {
-
     isValid: () =>
-      document.body.contains(article) &&
-      article.contains(headings[0].node),
+      document.body.contains(article) && article.contains(headings[0].node),
 
-    isShow: () =>
-      $isShow(),
+    isShow: () => $isShow(),
 
-    toggle: () =>
-      $isShow(!$isShow()),
+    toggle: () => $isShow(!$isShow()),
 
     next: () => {
       if ($isShow()) {
         let nextIdx = Math.min(headings.length - 1, $activeHeading() + 1)
-        scrollToHeading(headings[nextIdx], scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
+        scrollToHeading(
+          headings[nextIdx],
+          scrollable,
+          onScrollEnd,
+          ($topbarHeight() || 0) + 10
+        )
       }
     },
 
     prev: () => {
       if ($isShow()) {
         let prevIdx = Math.max(0, $activeHeading() - 1)
-        scrollToHeading(headings[prevIdx], scrollable, onScrollEnd, ($topbarHeight() || 0) + 10)
+        scrollToHeading(
+          headings[prevIdx],
+          scrollable,
+          onScrollEnd,
+          ($topbarHeight() || 0) + 10
+        )
       }
     },
 

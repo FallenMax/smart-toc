@@ -57,7 +57,8 @@ export const extractArticle = function(rootElement = document) {
       elems: [].slice.apply(rootElement.querySelectorAll(selector))
     }))
     .forEach(({ selector, elems }) =>
-      elems.forEach(elem => updateScore(elem, weights[selector])))
+      elems.forEach(elem => updateScore(elem, weights[selector]))
+    )
   const sorted = [...scores].sort((a, b) => b[1] - a[1])
 
   // reweigh top 5 nodes by factor:  "take-lots-vertical-space", "contain-less-links", "too-narrow"
@@ -144,7 +145,7 @@ export const extractHeadings = function(article) {
     })
   }
   if (__DEV__) {
-    const toElems = g => g ? g.elems : []
+    const toElems = g => (g ? g.elems : [])
     draw(toElems(headingGroup[0]), 'blue')
     draw(toElems(headingGroup[1]), 'green')
     draw(toElems(headingGroup[2]), 'yellow')

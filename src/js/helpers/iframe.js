@@ -10,15 +10,17 @@ function getMaster(root) {
   if (root.frames.length === 0) {
     return root
   } else {
-    const largestChild = [].slice.apply(root.document.getElementsByTagName('iframe'))
+    const largestChild = [].slice
+      .apply(root.document.getElementsByTagName('iframe'))
       .map(f => ({
         elem: f,
         area: f.offsetWidth * f.offsetHeight
       }))
-      .sort((a, b) => (b.area - a.area))[0]
+      .sort((a, b) => b.area - a.area)[0]
     const html = root.document.documentElement
-    return largestChild.area / (html.offsetWidth * html.offsetHeight) > 0.5 ?
-      largestChild.elem.contentWindow : root
+    return largestChild.area / (html.offsetWidth * html.offsetHeight) > 0.5
+      ? largestChild.elem.contentWindow
+      : root
   }
 }
 

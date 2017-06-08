@@ -4,7 +4,6 @@ import extract from './helpers/extract'
 import { toast } from './helpers/util'
 
 if (isMasterFrame(window)) {
-
   let toc
 
   const generate = function(option = {}) {
@@ -26,18 +25,16 @@ if (isMasterFrame(window)) {
     }
   }, 3000)
 
-  chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-      try {
-        if (toc) {
-          toc[request]()
-        } else {
-          toc = generate()
-        }
-      } catch (e) {
-        console.error(e)
+  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    try {
+      if (toc) {
+        toc[request]()
+      } else {
+        toc = generate()
       }
-      sendResponse(true)
+    } catch (e) {
+      console.error(e)
     }
-  )
+    sendResponse(true)
+  })
 }

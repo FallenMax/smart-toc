@@ -1,6 +1,5 @@
 import { throttle } from '../helpers/util'
 
-
 const Handle = function({ $userOffset }) {
   const handleUserDrag = function(handle, $userOffset) {
     let [sClientX, sClientY] = [0, 0]
@@ -35,6 +34,5 @@ const Handle = function({ $userOffset }) {
   handleUserDrag(handle, $userOffset)
   return handle
 }
-
 
 export default Handle

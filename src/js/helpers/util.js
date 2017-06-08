@@ -51,8 +51,7 @@ export function throttle(fn, delay) {
   }
 }
 
-export const safe = str =>
-  str.replace(/\s+/g, '-')
+export const safe = str => str.replace(/\s+/g, '-')
 
 export const unique = (function uniqueGenerator() {
   let set = new Set()
@@ -89,7 +88,10 @@ export const scrollTo = (function scrollToFactory() {
     let startTime
     let ease = easeFn || easeOutQuad
     let distanceRatio = Math.min(Math.abs(distance) / 10000, 1)
-    let duration = Math.max(maxDuration * distanceRatio * (2 - distanceRatio), 10)
+    let duration = Math.max(
+      maxDuration * distanceRatio * (2 - distanceRatio),
+      10
+    )
 
     function update(timestamp) {
       if (!startTime) {
@@ -97,7 +99,12 @@ export const scrollTo = (function scrollToFactory() {
       }
       let progress = (timestamp - startTime) / duration
       if (progress < 1) {
-        scrollElem.scrollTop = ease(timestamp - startTime, startScrollTop, distance, duration)
+        scrollElem.scrollTop = ease(
+          timestamp - startTime,
+          startScrollTop,
+          distance,
+          duration
+        )
         requestAnimationFrame(update)
       } else {
         scrollElem.scrollTop = endScrollTop
@@ -132,7 +139,9 @@ export function applyStyle(elem, style = {}, reset = false) {
 }
 
 export function translate3d(x = 0, y = 0, z = 0) {
-  return `translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${Math.round(z)}px)` // 0.5px => blurred text
+  return `translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${Math.round(
+    z
+  )}px)` // 0.5px => blurred text
 }
 
 function setClass(elem, names, delay) {
@@ -144,8 +153,6 @@ function setClass(elem, names, delay) {
     }, delay)
   }
 }
-
-
 
 export const toast = (function toastFactory() {
   let timers = []
@@ -186,7 +193,6 @@ export const insertCSS = function(css, id) {
     return
   }
 }
-
 
 export const mount = function(parent, elem) {
   if (!parent.contains(elem)) {
