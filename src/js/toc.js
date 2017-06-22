@@ -175,11 +175,37 @@ const getTopBarHeight = function(topElem) {
   }
 }
 
+const getTheme = function(article) {
+  let elem = article
+  try {
+    const rgba = (...args) => args
+    const rgb = (...args) => args
+    const parseColor = str => eval(str)
+    const getBgColor = elem =>
+      parseColor(window.getComputedStyle(elem)['background-color'])
+    const isTransparent = ([r, g, b, a]) => a === 0
+    const isLight = ([r, g, b, a]) => r + g + b > 255 / 2 * 3
+    while (elem && elem.parentElement) {
+      const color = getBgColor(elem)
+      console.log('color ', color)
+      if (isTransparent(color)) {
+        elem = elem.parentElement
+      } else {
+        return isLight(color) ? 'light' : 'dark'
+      }
+    }
+    return 'light'
+  } catch (e) {
+    return 'light'
+  }
+}
+
 export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   headings = addAnchors(headings)
   insertCSS(tocCSS, 'smarttoc__css')
 
   const scrollable = getScrollParent(article)
+  const theme = getTheme(article)
 
   const $isShow = Stream(true)
   const $topbarHeight = Stream()
@@ -231,6 +257,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   const container = Container({
     article,
     headings,
+    theme,
     $activeHeading,
     $isShow,
     $userOffset,

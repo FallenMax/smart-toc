@@ -121,6 +121,7 @@ const getOptimalContainerPos = function(article) {
 const Container = function({
   article,
   headings,
+  theme,
   $activeHeading,
   $isShow,
   $userOffset,
@@ -138,6 +139,8 @@ const Container = function({
   if (isLengthy) {
     container.classList.add('lengthy')
   }
+
+  container.classList.add(theme || 'light')
 
   $isShow.subscribe(isShow => {
     if (!isShow) {
