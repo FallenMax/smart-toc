@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Smart TOC",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "description": "Add a table of contents for article you are reading",
   "browser_action": {
     "default_icon": "icon.png",
@@ -12,9 +12,7 @@
     "128": "icon.png"
   },
   "background": {
-    "scripts": [
-      "background.js"
-    ],
+    "scripts": ["background.js"],
     "persistent": false
   },
   "commands": {
@@ -34,8 +32,6 @@
       "description": "Jump to next heading"
     }
   },
-  "permissions": [
-    "activeTab"
-  ],
+  "permissions": ["activeTab"],
   "author": "FallenMax@gmail.com"
 }
