@@ -66,6 +66,39 @@ export const unique = (function uniqueGenerator() {
   }
 })()
 
+export const getScroll = (elem, direction = 'top') => {
+  if (elem === document.body) {
+    return direction === 'top'
+      ? document.documentElement.scrollTop
+      : document.documentElement.scrollLeft
+  } else {
+    return direction === 'top' ? elem.scrollTop : elem.scrollLeft
+  }
+}
+export const getTotalScroll = (elem, direction = 'top') => {
+  return getScroll(elem, direction) + elem === document.body
+    ? 0
+    : direction === 'top'
+      ? document.documentElement.scrollTop
+      : document.documentElement.scrollLeft
+}
+
+export const setScroll = (elem, val, direction = 'top') => {
+  if (elem === document.body) {
+    if (direction === 'top') {
+      document.documentElement.scrollTop = val
+    } else {
+      document.documentElement.scrollLeft = val
+    }
+  } else {
+    if (direction === 'top') {
+      elem.scrollTop = val
+    } else {
+      elem.scrollLeft = val
+    }
+  }
+}
+
 export const scrollTo = (function scrollToFactory() {
   let request
   const easeOutQuad = function(t, b, c, d) {
@@ -82,8 +115,8 @@ export const scrollTo = (function scrollToFactory() {
   }) {
     cancelAnimationFrame(request)
     let rect = targetElem.getBoundingClientRect()
-    let endScrollTop = rect.top + scrollElem.scrollTop - topMargin
-    let startScrollTop = scrollElem.scrollTop
+    let endScrollTop = rect.top + getScroll(scrollElem) - topMargin
+    let startScrollTop = getScroll(scrollElem)
     let distance = endScrollTop - startScrollTop
     let startTime
     let ease = easeFn || easeOutQuad
@@ -99,15 +132,13 @@ export const scrollTo = (function scrollToFactory() {
       }
       let progress = (timestamp - startTime) / duration
       if (progress < 1) {
-        scrollElem.scrollTop = ease(
-          timestamp - startTime,
-          startScrollTop,
-          distance,
-          duration
+        setScroll(
+          scrollElem,
+          ease(timestamp - startTime, startScrollTop, distance, duration)
         )
         requestAnimationFrame(update)
       } else {
-        scrollElem.scrollTop = endScrollTop
+        setScroll(scrollElem, endScrollTop)
         if (callback) {
           callback()
         }

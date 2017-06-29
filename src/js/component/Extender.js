@@ -1,5 +1,5 @@
 import Stream from '../helpers/stream'
-import { num, applyStyle } from '../helpers/util'
+import { num, applyStyle, getScroll } from '../helpers/util'
 
 const Extender = function({ headings, scrollable, $isShow, $relayout }) {
   const $extender = Stream()
@@ -15,7 +15,7 @@ const Extender = function({ headings, scrollable, $isShow, $relayout }) {
       if (scrollable === document.body) {
         let heightBelowLastRect =
           document.documentElement.scrollHeight -
-          (lastRect.bottom + window.scrollY) -
+          (lastRect.bottom + document.documentElement.scrollTop) -
           num(extender.style.height) // in case we are there already
         extenderHeight = isShow
           ? Math.max(
@@ -28,7 +28,7 @@ const Extender = function({ headings, scrollable, $isShow, $relayout }) {
         let heightBelowLastRect =
           scrollRect.top +
           scrollable.scrollHeight -
-          scrollable.scrollTop - // bottom of scrollable relative to viewport
+          getScroll(scrollable) - // bottom of scrollable relative to viewport
           lastRect.bottom -
           num(extender.style.height) // in case we are there already
         extenderHeight = isShow

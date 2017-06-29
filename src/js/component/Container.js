@@ -1,7 +1,14 @@
 import TOC from './TOC'
 import Handle from './Handle'
 import Stream from '../helpers/stream'
-import { translate3d, applyStyle, log, num } from '../helpers/util'
+import {
+  translate3d,
+  applyStyle,
+  log,
+  num,
+  getScroll,
+  getTotalScroll
+} from '../helpers/util'
 
 const ARTICLE_TOC_GAP = 150
 
@@ -19,11 +26,13 @@ const makeSticky = function(options) {
   let $refMetric = Stream.combine($refChange, () => {
     let refRect = ref.getBoundingClientRect()
     let refStyle = window.getComputedStyle(ref)
+    let totalScrollTop = getTotalScroll(ref, 'top')
+    let totalScrollLeft = getTotalScroll(ref, 'left')
     let refMetric = {
-      top: refRect.top + window.scrollY,
-      right: refRect.right + window.scrollX,
-      bottom: refRect.bottom + window.scrollY,
-      left: refRect.left + window.scrollX,
+      top: refRect.top + totalScrollTop,
+      right: refRect.right + totalScrollLeft,
+      bottom: refRect.bottom + totalScrollTop,
+      left: refRect.left + totalScrollLeft,
       width: refRect.width,
       height: refRect.height
     }
@@ -42,9 +51,10 @@ const makeSticky = function(options) {
     $offset,
     $topMargin,
     (article, [scrollX, scrollY], [offsetX, offsetY], topMargin) => {
-      let x = direction === 'right'
-        ? article.right + gap
-        : article.left - gap - popperMetric.width
+      let x =
+        direction === 'right'
+          ? article.right + gap
+          : article.left - gap - popperMetric.width
       x = Math.min(Math.max(0, x), window.innerWidth - popperMetric.width) // restrict to visible area
       let y = Math.max(topMargin, article.top - scrollY)
       return {

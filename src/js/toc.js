@@ -7,7 +7,9 @@ import {
   scrollTo,
   unique,
   safe,
-  applyStyle
+  applyStyle,
+  getScroll,
+  getTotalScroll
 } from './helpers/util'
 import tocCSS from '../style/toc.css'
 import Stream from './helpers/stream'
@@ -86,25 +88,26 @@ const getScrollParent = function(elem) {
 }
 
 const scrollStream = function(scrollable, $isShow) {
-  let $scroll = Stream([scrollable.scrollLeft, scrollable.scrollTop])
+  let $scroll = Stream([getScroll(scrollable, 'left'), getScroll(scrollable)])
   let source = scrollable === document.body ? window : scrollable
   Stream.fromEvent(source, 'scroll')
     .filter(() => $isShow())
     .throttle()
     .subscribe(() => {
-      $scroll([scrollable.scrollLeft, scrollable.scrollTop])
+      $scroll([getScroll(scrollable, 'left'), getScroll(scrollable)])
     })
   return $scroll
 }
 
 const activeHeadingStream = function(
   headings,
+  scrollable,
   $scroll,
   $relayout,
   $topbarHeight
 ) {
   let $headingYs = $relayout.map(() => {
-    let scrollY = window.scrollY // FIXME
+    let scrollY = getTotalScroll(scrollable)
     return headings.map(({ node }) => [
       scrollY + node.getBoundingClientRect().top,
       scrollY + node.getBoundingClientRect().bottom
@@ -178,16 +181,14 @@ const getTopBarHeight = function(topElem) {
 const getTheme = function(article) {
   let elem = article
   try {
-    const rgba = (...args) => args
-    const rgb = (...args) => args
-    const parseColor = str => eval(str)
+    const parseColor = str =>
+      str.replace(/rgba?\(/, '').replace(/\).*/, '').split(/, ?/)
     const getBgColor = elem =>
       parseColor(window.getComputedStyle(elem)['background-color'])
     const isTransparent = ([r, g, b, a]) => a === 0
     const isLight = ([r, g, b, a]) => r + g + b > 255 / 2 * 3
     while (elem && elem.parentElement) {
       const color = getBgColor(elem)
-      console.log('color ', color)
       if (isTransparent(color)) {
         elem = elem.parentElement
       } else {
@@ -222,6 +223,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   const $relayout = relayoutStream(article, $resize, $isShow)
   const $activeHeading = activeHeadingStream(
     headings,
+    scrollable,
     $scroll,
     $relayout,
     $topbarHeight
