@@ -69,8 +69,8 @@ export const unique = (function uniqueGenerator() {
 export const getScroll = (elem, direction = 'top') => {
   if (elem === document.body) {
     return direction === 'top'
-      ? document.documentElement.scrollTop
-      : document.documentElement.scrollLeft
+      ? document.documentElement.scrollTop || document.body.scrollTop
+      : document.documentElement.scrollLeft || document.body.scrollLeft
   } else {
     return direction === 'top' ? elem.scrollTop : elem.scrollLeft
   }
@@ -79,16 +79,18 @@ export const getTotalScroll = (elem, direction = 'top') => {
   return getScroll(elem, direction) + elem === document.body
     ? 0
     : direction === 'top'
-      ? document.documentElement.scrollTop
-      : document.documentElement.scrollLeft
+      ? document.documentElement.scrollTop || document.body.scrollTop
+      : document.documentElement.scrollLeft || document.body.scrollLeft
 }
 
 export const setScroll = (elem, val, direction = 'top') => {
   if (elem === document.body) {
     if (direction === 'top') {
       document.documentElement.scrollTop = val
+      window.scrollTo(window.scrollX, val)
     } else {
       document.documentElement.scrollLeft = val
+      window.scrollTo(val, window.scrollY)
     }
   } else {
     if (direction === 'top') {
