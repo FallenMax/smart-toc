@@ -1,20 +1,14 @@
 import TOC from './TOC'
 import Handle from './Handle'
 import Stream from '../helpers/stream'
-import {
-  translate3d,
-  applyStyle,
-  log,
-  num,
-  getScroll,
-  getTotalScroll
-} from '../helpers/util'
+import { translate3d, applyStyle, num, getScroll } from '../helpers/util'
 
 const ARTICLE_TOC_GAP = 150
 
 const makeSticky = function(options) {
   let {
     ref,
+    scrollable,
     popper,
     direction,
     gap,
@@ -23,40 +17,44 @@ const makeSticky = function(options) {
     $offset,
     $topMargin
   } = options
-  let $refMetric = Stream.combine($refChange, () => {
+  let $refRect = Stream.combine($refChange, () => {
     let refRect = ref.getBoundingClientRect()
     let refStyle = window.getComputedStyle(ref)
-    let totalScrollTop = getTotalScroll(ref, 'top')
-    let totalScrollLeft = getTotalScroll(ref, 'left')
-    let refMetric = {
-      top: refRect.top + totalScrollTop,
-      right: refRect.right + totalScrollLeft,
-      bottom: refRect.bottom + totalScrollTop,
-      left: refRect.left + totalScrollLeft,
+    let scrollTop = getScroll(scrollable, 'top')
+    let scrollLeft = getScroll(scrollable, 'left')
+    let refFullRect = {
+      top: refRect.top - scrollTop,
+      right: refRect.right - scrollLeft,
+      bottom: refRect.bottom - scrollTop,
+      left: refRect.left - scrollLeft,
       width: refRect.width,
       height: refRect.height
     }
     if (refStyle['box-sizing'] === 'border-box') {
-      refMetric.left += num(refStyle['padding-left'])
-      refMetric.right -= num(refStyle['padding-right'])
-      refMetric.width -=
+      refFullRect.left += num(refStyle['padding-left'])
+      refFullRect.right -= num(refStyle['padding-right'])
+      refFullRect.width -=
         num(refStyle['padding-left']) + num(refStyle['padding-right'])
     }
-    return refMetric
+    return refFullRect
   })
   let popperMetric = popper.getBoundingClientRect()
+  const scrollableTop =
+    scrollable === document.body ? 0 : scrollable.getBoundingClientRect().top
   return Stream.combine(
-    $refMetric,
+    $refRect,
     $scroll,
     $offset,
     $topMargin,
-    (article, [scrollX, scrollY], [offsetX, offsetY], topMargin) => {
+    (ref, [scrollX, scrollY], [offsetX, offsetY], topMargin) => {
       let x =
         direction === 'right'
-          ? article.right + gap
-          : article.left - gap - popperMetric.width
+          ? ref.right + gap
+          : ref.left - gap - popperMetric.width
       x = Math.min(Math.max(0, x), window.innerWidth - popperMetric.width) // restrict to visible area
-      let y = Math.max(topMargin, article.top - scrollY)
+      let y = Math.max(scrollableTop + topMargin, ref.top - scrollY)
+      console.log('scrollY ', scrollY)
+      console.log(' ref.top  ', ref.top)
       return {
         position: 'fixed',
         left: 0,
@@ -115,14 +113,9 @@ const getOptimalContainerPos = function(article) {
     ? rightDepths.reduce((a, b) => a + b, 0) / rightDepths.length
     : null
 
-  log('rightDepths ', rightDepths)
-  log('rightAvgDepth ', rightAvgDepth)
-  log('leftDepths ', leftDepths)
-  log('leftAvgDepth ', leftAvgDepth)
   if (!leftAvgDepth) return { direction: 'right' }
   if (!rightAvgDepth) return { direction: 'left' }
   const spaceDiff = document.documentElement.offsetWidth - right - left
-  log('spaceDiff ', spaceDiff)
   const scoreDiff =
     spaceDiff * 1 + (rightAvgDepth - leftAvgDepth) * 9 * -10 + 20 // I do like right better
   return scoreDiff > 0 ? { direction: 'right' } : { direction: 'left' }
@@ -130,6 +123,7 @@ const getOptimalContainerPos = function(article) {
 
 const Container = function({
   article,
+  scrollable,
   headings,
   theme,
   $activeHeading,
@@ -169,6 +163,7 @@ const Container = function({
 
     const $containerStyle = makeSticky({
       ref: article,
+      scrollable: scrollable,
       popper: container,
       direction: direction,
       gap: ARTICLE_TOC_GAP,

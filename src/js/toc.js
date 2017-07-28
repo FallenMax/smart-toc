@@ -8,8 +8,7 @@ import {
   unique,
   safe,
   applyStyle,
-  getScroll,
-  getTotalScroll
+  getScroll
 } from './helpers/util'
 import tocCSS from '../style/toc.css'
 import Stream from './helpers/stream'
@@ -106,34 +105,37 @@ const activeHeadingStream = function(
   $relayout,
   $topbarHeight
 ) {
-  let $headingYs = $relayout.map(() => {
-    let scrollY = getTotalScroll(scrollable)
-    return headings.map(({ node }) => [
-      scrollY + node.getBoundingClientRect().top,
-      scrollY + node.getBoundingClientRect().bottom
-    ])
+  const $headingScrollYs = $relayout.map(() => {
+    const scrollableTop =
+      (scrollable === document.body
+        ? 0
+        : scrollable.getBoundingClientRect().top) - getScroll(scrollable, 'top')
+    return headings.map(
+      ({ node }) => node.getBoundingClientRect().top - scrollableTop
+    )
   })
 
-  let $curIndex = Stream.combine($headingYs, $scroll, $topbarHeight, function(
-    headingYs,
-    [scrollX, scrollY],
-    topbarHeight = 0
-  ) {
-    let i = 0
-    for (let len = headingYs.length; i < len; i++) {
-      if (headingYs[i][0] > scrollY + topbarHeight + 20) {
-        break
+  let $curIndex = Stream.combine(
+    $headingScrollYs,
+    $scroll,
+    $topbarHeight,
+    function(headingScrollYs, [scrollX, scrollY], topbarHeight = 0) {
+      let i = 0
+      for (let len = headingScrollYs.length; i < len; i++) {
+        if (headingScrollYs[i] > scrollY + topbarHeight + 20) {
+          break
+        }
       }
+      return Math.max(0, i - 1)
     }
-    return Math.max(0, i - 1)
-  })
+  )
 
   return $curIndex.unique()
 }
 
 const scrollToHeading = function(
   { node },
-  scrollElem = document.body,
+  scrollElem,
   onScrollEnd,
   topMargin = 0
 ) {
@@ -207,6 +209,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   const scrollable = getScrollParent(article)
   const theme = getTheme(article)
+  log('theme', theme)
 
   const $isShow = Stream(true)
   const $topbarHeight = Stream()
@@ -236,6 +239,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     if ($topbarHeight() == null) {
       setTimeout(() => {
         $topbarHeight(getTopBarHeight(node))
+        log('topBarHeight', $topbarHeight())
         if ($topbarHeight()) {
           scrollToHeading({ node }, scrollable, null, $topbarHeight() + 10)
         }
@@ -258,6 +262,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
 
   const container = Container({
     article,
+    scrollable,
     headings,
     theme,
     $activeHeading,

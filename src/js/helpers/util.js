@@ -75,13 +75,6 @@ export const getScroll = (elem, direction = 'top') => {
     return direction === 'top' ? elem.scrollTop : elem.scrollLeft
   }
 }
-export const getTotalScroll = (elem, direction = 'top') => {
-  return getScroll(elem, direction) + elem === document.body
-    ? 0
-    : direction === 'top'
-      ? document.documentElement.scrollTop || document.body.scrollTop
-      : document.documentElement.scrollLeft || document.body.scrollLeft
-}
 
 export const setScroll = (elem, val, direction = 'top') => {
   if (elem === document.body) {
@@ -109,7 +102,7 @@ export const scrollTo = (function scrollToFactory() {
   }
   return function scrollTo({
     targetElem,
-    scrollElem = document.body,
+    scrollElem,
     topMargin = 0,
     maxDuration = 300,
     easeFn,
@@ -117,7 +110,13 @@ export const scrollTo = (function scrollToFactory() {
   }) {
     cancelAnimationFrame(request)
     let rect = targetElem.getBoundingClientRect()
-    let endScrollTop = rect.top + getScroll(scrollElem) - topMargin
+    let endScrollTop =
+      rect.top -
+      (scrollElem === document.body
+        ? 0
+        : scrollElem.getBoundingClientRect().top) +
+      getScroll(scrollElem) -
+      topMargin
     let startScrollTop = getScroll(scrollElem)
     let distance = endScrollTop - startScrollTop
     let startTime
