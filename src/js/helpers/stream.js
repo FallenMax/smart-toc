@@ -44,6 +44,10 @@ const proto = {
     const emit = throttle($throttled, delay)
     this.subscribe(emit)
     return $throttled
+  },
+  log(name) {
+    this.subscribe(e => console.log(`[${name}]: `, e))
+    return this
   }
 }
 
