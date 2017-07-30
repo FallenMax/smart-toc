@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Smart TOC",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "description": "Add a table of contents for article you are reading",
   "browser_action": {
     "default_icon": "icon.png",
