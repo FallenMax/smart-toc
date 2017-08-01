@@ -53,8 +53,6 @@ const makeSticky = function(options) {
           : ref.left - gap - popperMetric.width
       x = Math.min(Math.max(0, x), window.innerWidth - popperMetric.width) // restrict to visible area
       let y = Math.max(scrollableTop + topMargin, ref.top - scrollY)
-      console.log('scrollY ', scrollY)
-      console.log(' ref.top  ', ref.top)
       return {
         position: 'fixed',
         left: 0,
