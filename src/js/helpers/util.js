@@ -126,6 +126,14 @@ export const scrollTo = (function scrollToFactory() {
       maxDuration * distanceRatio * (2 - distanceRatio),
       10
     )
+    if (!maxDuration) {
+      setScroll(scrollElem, endScrollTop)
+      if (callback) {
+        callback()
+      }
+    } else {
+      requestAnimationFrame(update)
+    }
 
     function update(timestamp) {
       if (!startTime) {
@@ -145,7 +153,6 @@ export const scrollTo = (function scrollToFactory() {
         }
       }
     }
-    requestAnimationFrame(update)
   }
 })()
 

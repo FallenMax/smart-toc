@@ -1,6 +1,5 @@
 /* EVERYTHING HERE WILL BE '!IMPORTANT'  */
 
-
 /* reset */
 
 #smarttoc {
@@ -11,10 +10,12 @@
   all: unset;
 }
 
-
 /* container */
 
 #smarttoc {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   position: fixed;
   max-width: 22em;
   min-width: 14em;
@@ -22,7 +23,6 @@
   z-index: 10000;
   box-sizing: border-box;
   background-color: #fff;
-  padding: 2em 1.3em 1.3em 1em;
   color: gray;
   font-size: calc(12px + 0.1vw);
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -31,8 +31,7 @@
   border: 1px solid rgba(158, 158, 158, 0.22);
   -webkit-font-smoothing: subpixel-antialiased;
   font-smoothing: subpixel-antialiased;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   will-change: transform, max-width;
   transition: max-width 0.3s;
 }
@@ -48,10 +47,7 @@
 #smarttoc .handle {
   -webkit-user-select: none;
   user-select: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
+
   border-bottom: 1px solid rgba(158, 158, 158, 0.22);
   padding: 0.1em 0.7em;
   font-variant-caps: inherit;
@@ -79,13 +75,17 @@
   background: #f9f9f9;
 }
 
+#smarttoc > ul {
+  flex-grow: 1;
+  padding: 0 1.3em 1.3em 1em;
+  overflow-y: auto;
+}
 
 /* all headings  */
 
 #smarttoc ul,
 #smarttoc li {
   list-style: none;
-  padding-left: 0;
   display: block;
 }
 
@@ -107,11 +107,10 @@
   color: #563d7c;
 }
 
-#smarttoc li.active>a {
+#smarttoc li.active > a {
   border-left-color: #563d7c;
   color: #563d7c;
 }
-
 
 /* heading level: 1 */
 
@@ -126,16 +125,15 @@
 
 #smarttoc ul a:hover,
 #smarttoc ul a:active,
-#smarttoc ul li.active>a {
+#smarttoc ul li.active > a {
   border-left-width: 3px;
   border-left-style: solid;
   padding-left: calc(1.3em - 3px);
 }
 
-#smarttoc ul li.active>a {
+#smarttoc ul li.active > a {
   font-weight: 700;
 }
-
 
 /* heading level: 2 (hidden only when there are too many headings)  */
 
@@ -147,7 +145,7 @@
   display: none;
 }
 
-#smarttoc.lengthy ul li.active>ul {
+#smarttoc.lengthy ul li.active > ul {
   display: block;
 }
 
@@ -158,13 +156,12 @@
 
 #smarttoc ul ul a:hover,
 #smarttoc ul ul a:active,
-#smarttoc ul ul li.active>a {
+#smarttoc ul ul li.active > a {
   border-left-width: 2px;
   border-left-style: solid;
   padding-left: calc(2.7em - 2px);
   font-weight: normal;
 }
-
 
 /* heading level: 3 (hidden unless parent is active) */
 
@@ -173,7 +170,7 @@
   display: none;
 }
 
-#smarttoc ul ul li.active>ul {
+#smarttoc ul ul li.active > ul {
   display: block;
 }
 
@@ -184,7 +181,7 @@
 
 #smarttoc ul ul ul a:hover,
 #smarttoc ul ul ul a:active,
-#smarttoc ul ul ul li.active>a {
+#smarttoc ul ul ul li.active > a {
   border-left-width: 1px;
   border-left-style: solid;
   padding-left: calc(4em - 1px);
