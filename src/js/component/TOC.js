@@ -64,7 +64,6 @@ const createHeadingDOM = function(headings) {
 }
 
 const TOC = function({ headings, $activeHeading, onClickHeading }) {
-  let isScrolling = false
   const updateActiveHeading = function(container, activeIndex) {
     let activeLIs = [].slice.apply(container.querySelectorAll('.active'))
     activeLIs.forEach(li => {
@@ -72,33 +71,26 @@ const TOC = function({ headings, $activeHeading, onClickHeading }) {
     })
     let anchors = [].slice.apply(container.querySelectorAll('a'))
     let elem = anchors[activeIndex]
-    setTimeout(
-      (elem => () => {
-        const elemRect = elem.getBoundingClientRect()
-        const containerRect = container.getBoundingClientRect()
-        const outOfView =
-          elemRect.top > containerRect.bottom ||
-          elemRect.bottom < containerRect.top
-        if (!isScrolling && outOfView) {
-          isScrolling = true
-          scrollTo({
-            targetElem: elem,
-            scrollElem: container,
-            maxDuration: 0,
-            topMargin: container.offsetHeight / 2 - elem.offsetHeight / 2,
-            callback() {
-              isScrolling = false
-            }
-          })
-        }
-      })(elem),
-      0
-    )
+    const target = elem
     while (elem !== container) {
       if (elem.tagName === 'LI') {
         elem.classList.add('active')
       }
       elem = elem.parentNode
+    }
+
+    const targetRect = target.getBoundingClientRect()
+    const containerRect = container.getBoundingClientRect()
+    const outOfView =
+      targetRect.top > containerRect.bottom ||
+      targetRect.bottom < containerRect.top
+    if (outOfView) {
+      scrollTo({
+        targetElem: target,
+        scrollElem: container,
+        maxDuration: 0,
+        topMargin: container.offsetHeight / 2 - target.offsetHeight / 2
+      })
     }
   }
 
