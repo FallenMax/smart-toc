@@ -101,6 +101,16 @@ const TOC = function({ headings, $activeHeading, onClickHeading }) {
   })
 
   toc.addEventListener('click', onClickHeading, true)
+  toc.addEventListener('wheel', function avoidScrollEscalate(e) {
+    const maxScroll = toc.scrollHeight - toc.offsetHeight
+    if (toc.scrollTop + e.deltaY < 0) {
+      toc.scrollTop = 0
+      e.preventDefault()
+    } else if (toc.scrollTop + e.deltaY > maxScroll) {
+      toc.scrollTop = maxScroll
+      e.preventDefault()
+    }
+  })
   return toc
 }
 
