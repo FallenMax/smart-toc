@@ -1,4 +1,5 @@
 import { assert, log, draw } from './util'
+import Stream from './stream'
 
 const pathToTop = function(elem, maxLvl = -1) {
   assert(elem, 'no element given')
@@ -155,6 +156,18 @@ export const extractHeadings = function(article) {
 
 export default function extract() {
   const article = extractArticle(document)
-  const headings = article && extractHeadings(article)
-  return [article, headings]
+  let $headings
+  if (article) {
+    $headings = Stream(extractHeadings(article))
+
+    const observer = new MutationObserver(_ => {
+      let headings = extractHeadings(article)
+      if (headings && headings.length) {
+        $headings(headings)
+      }
+    })
+    observer.observe(article, { childList: true })
+  }
+
+  return [article, $headings]
 }

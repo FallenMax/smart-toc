@@ -63,7 +63,7 @@ const createHeadingDOM = function(headings) {
   return dom
 }
 
-const TOC = function({ headings, $activeHeading, onClickHeading }) {
+const TOC = function({ $headings, $activeHeading, onClickHeading }) {
   const updateActiveHeading = function(container, activeIndex) {
     let activeLIs = [].slice.apply(container.querySelectorAll('.active'))
     activeLIs.forEach(li => {
@@ -94,24 +94,29 @@ const TOC = function({ headings, $activeHeading, onClickHeading }) {
     }
   }
 
-  let toc = createHeadingDOM(headings)
-
-  $activeHeading.subscribe(activeIndex => {
-    updateActiveHeading(toc, activeIndex)
-  })
-
-  toc.addEventListener('click', onClickHeading, true)
-  toc.addEventListener('wheel', function avoidScrollEscalate(e) {
-    const maxScroll = toc.scrollHeight - toc.offsetHeight
-    if (toc.scrollTop + e.deltaY < 0) {
-      toc.scrollTop = 0
+  function avoidScrollEscalate(e) {
+    const maxScroll = $toc.scrollHeight - $toc.offsetHeight
+    if ($toc.scrollTop + e.deltaY < 0) {
+      $toc.scrollTop = 0
       e.preventDefault()
-    } else if (toc.scrollTop + e.deltaY > maxScroll) {
-      toc.scrollTop = maxScroll
+    } else if ($toc.scrollTop + e.deltaY > maxScroll) {
+      $toc.scrollTop = maxScroll
       e.preventDefault()
     }
+  }
+
+  const ul = document.createElement('UL')
+
+  const $toc = $headings.map(createHeadingDOM)
+
+  $activeHeading.subscribe(activeIndex => {
+    updateActiveHeading($toc, activeIndex)
   })
-  return toc
+
+  // $toc.addEventListener('click', onClickHeading, true)
+  // $toc.addEventListener('wheel', avoidScrollEscalate, true)
+
+  return ul
 }
 
 export default TOC

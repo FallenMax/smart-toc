@@ -122,7 +122,7 @@ const getOptimalContainerPos = function(article) {
 const Container = function({
   article,
   scrollable,
-  headings,
+  $headings,
   theme,
   $activeHeading,
   $isShow,
@@ -135,12 +135,17 @@ const Container = function({
   let container = document.createElement('DIV')
   container.id = 'smarttoc'
   container.appendChild(Handle({ $userOffset }))
-  container.appendChild(TOC({ headings, $activeHeading, onClickHeading }))
+  container.appendChild(TOC({ $headings, $activeHeading, onClickHeading }))
 
-  let isLengthy = headings.filter(h => h.level <= 2).length > 50
-  if (isLengthy) {
-    container.classList.add('lengthy')
-  }
+  const $isLengthy = $headings.map(
+    headings => headings.filter(h => h.level <= 2).length > 50
+  )
+  $isLengthy.subscribe(
+    isLengthy =>
+      isLengthy
+        ? container.classList.add('lengthy')
+        : container.classList.remove('lengthy')
+  )
 
   container.classList.add(theme || 'light')
 
