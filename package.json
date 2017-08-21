@@ -33,7 +33,12 @@
   "devDependencies": {
     "chokidar-cli": "1.2.0",
     "rollup": "0.34.10",
+    "rollup-plugin-commonjs": "^8.1.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-replace": "1.1.1",
     "rollup-plugin-string": "^2.0.2"
+  },
+  "dependencies": {
+    "mithril": "^1.1.3"
   }
 }
