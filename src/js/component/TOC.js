@@ -1,117 +1,101 @@
 import { scrollTo } from '../helpers/util'
+import m from 'mithril'
 
-const createHeadingDOM = function(headings) {
-  function toTree(headings) {
+const restrictScroll = function(e) {
+  const toc = e.target
+  const maxScroll = toc.scrollHeight - toc.offsetHeight
+  if (toc.scrollTop + e.deltaY < 0) {
+    toc.scrollTop = 0
+    e.preventDefault()
+  } else if (toc.scrollTop + e.deltaY > maxScroll) {
+    toc.scrollTop = maxScroll
+    e.preventDefault()
+  }
+}
+
+const TOC = function({ headings, $activeHeading, onClickHeading }) {
+  // $activeHeading.subscribe(activeIndex => {})
+  const toTree = function(headings) {
     let i = 0
-    let len = headings.length
-    let tree = []
+    let tree = { level: 0, children: [] }
     let stack = [tree]
-    const last = arr => arr.slice(-1)[0]
+    const top = arr => arr.slice(-1)[0]
 
-    function createChild(parent, heading) {
-      parent.push({
-        heading: heading || null,
-        children: []
-      })
-      return last(parent).children
-    }
-    while (i < len) {
-      let { level } = headings[i]
+    while (i < headings.length) {
+      let { level, isActive } = headings[i]
       if (level === stack.length) {
-        let children = createChild(last(stack), headings[i])
-        stack.push(children)
+        const node = {
+          heading: headings[i],
+          children: []
+        }
+        top(stack).children.push(node)
+        stack.push(node)
+        if (isActive) {
+          stack.forEach(node => {
+            if (node.heading) {
+              node.heading.isActive = true
+            }
+          })
+        }
         i++
       } else if (level < stack.length) {
         stack.pop()
       } else if (level > stack.length) {
-        let children = createChild(last(stack))
-        stack.push(children)
+        const node = {
+          heading: null,
+          children: []
+        }
+        top(stack).children.push(node)
+        stack.push(node)
       }
     }
     return tree
   }
 
-  function toDOM(tree) {
-    function toUL(array) {
-      let ul = document.createElement('UL')
-      array.forEach(child => {
-        ul.appendChild(toLI(child))
+  const UL = (children, { isRoot = false } = {}) =>
+    m(
+      'ul' + (isRoot ? '#root' : ''),
+      { onwheel: isRoot && restrictScroll, onclick: isRoot && onClickHeading },
+      children.map(LI)
+    )
+
+  const LI = ({ heading, children }, index) =>
+    m(
+      'li',
+      { class: heading && heading.isActive ? 'active' : '', key: index },
+      [
+        heading &&
+          m('a', { href: `#${heading.anchor}` }, heading.node.textContent),
+        children && children.length && UL(children)
+      ].filter(Boolean)
+    )
+
+  return {
+    oncreate({ dom }) {
+      // scroll to heading if out of view
+      $activeHeading.subscribe(index => {
+        const target = [].slice.apply(dom.querySelectorAll('.active')).pop()
+        const targetRect = target.getBoundingClientRect()
+        const containerRect = dom.getBoundingClientRect()
+        const outOfView =
+          targetRect.top > containerRect.bottom ||
+          targetRect.bottom < containerRect.top
+        if (outOfView) {
+          scrollTo({
+            targetElem: target,
+            scrollElem: dom,
+            maxDuration: 0,
+            topMargin: dom.offsetHeight / 2 - target.offsetHeight / 2
+          })
+        }
       })
-      return ul
-    }
-
-    function toLI({ heading, children }) {
-      let li = document.createElement('LI')
-      let ul
-      if (heading) {
-        let a = document.createElement('A')
-        a.href = '#' + heading.anchor
-        a.textContent = heading.node.textContent
-        li.appendChild(a)
-      }
-      if (children && children.length) {
-        ul = toUL(children)
-        li.appendChild(ul)
-      }
-      return li
-    }
-    return toUL(tree)
-  }
-
-  let tree = toTree(headings)
-  let dom = toDOM(tree)
-  return dom
-}
-
-const TOC = function({ headings, $activeHeading, onClickHeading }) {
-  const updateActiveHeading = function(container, activeIndex) {
-    let activeLIs = [].slice.apply(container.querySelectorAll('.active'))
-    activeLIs.forEach(li => {
-      li.classList.remove('active')
-    })
-    let anchors = [].slice.apply(container.querySelectorAll('a'))
-    let elem = anchors[activeIndex]
-    const target = elem
-    while (elem !== container) {
-      if (elem.tagName === 'LI') {
-        elem.classList.add('active')
-      }
-      elem = elem.parentNode
-    }
-
-    const targetRect = target.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
-    const outOfView =
-      targetRect.top > containerRect.bottom ||
-      targetRect.bottom < containerRect.top
-    if (outOfView) {
-      scrollTo({
-        targetElem: target,
-        scrollElem: container,
-        maxDuration: 0,
-        topMargin: container.offsetHeight / 2 - target.offsetHeight / 2
-      })
+    },
+    view() {
+      headings.forEach((h, i) => (h.isActive = i === $activeHeading()))
+      const tree = toTree(headings)
+      return UL(tree.children, { isRoot: true })
     }
   }
-
-  let toc = createHeadingDOM(headings)
-
-  $activeHeading.subscribe(activeIndex => {
-    updateActiveHeading(toc, activeIndex)
-  })
-
-  toc.addEventListener('click', onClickHeading, true)
-  toc.addEventListener('wheel', function avoidScrollEscalate(e) {
-    const maxScroll = toc.scrollHeight - toc.offsetHeight
-    if (toc.scrollTop + e.deltaY < 0) {
-      toc.scrollTop = 0
-      e.preventDefault()
-    } else if (toc.scrollTop + e.deltaY > maxScroll) {
-      toc.scrollTop = maxScroll
-      e.preventDefault()
-    }
-  })
-  return toc
 }
 
 export default TOC

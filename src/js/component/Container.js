@@ -2,6 +2,7 @@ import TOC from './TOC'
 import Handle from './Handle'
 import Stream from '../helpers/stream'
 import { translate3d, applyStyle, num, getScroll } from '../helpers/util'
+import m from 'mithril'
 
 const ARTICLE_TOC_GAP = 150
 
@@ -132,49 +133,41 @@ const Container = function({
   $topbarHeight,
   onClickHeading
 }) {
-  let container = document.createElement('DIV')
-  container.id = 'smarttoc'
-  container.appendChild(Handle({ $userOffset }))
-  container.appendChild(TOC({ headings, $activeHeading, onClickHeading }))
-
-  let isLengthy = headings.filter(h => h.level <= 2).length > 50
-  if (isLengthy) {
-    container.classList.add('lengthy')
-  }
-
-  container.classList.add(theme || 'light')
-
-  $isShow.subscribe(isShow => {
-    if (!isShow) {
-      container.classList.add('hidden')
-    } else {
-      container.classList.remove('hidden')
+  const handle = Handle({ $userOffset })
+  const toc = TOC({ headings, $activeHeading, onClickHeading })
+  return {
+    oncreate({ dom }) {
+      const { direction } = getOptimalContainerPos(article)
+      this.$style = makeSticky({
+        ref: article,
+        scrollable: scrollable,
+        popper: dom,
+        direction: direction,
+        gap: ARTICLE_TOC_GAP,
+        $topMargin: $topbarHeight.map(h => (h || 0) + 50),
+        $refChange: $relayout,
+        $scroll: $scroll,
+        $offset: $userOffset
+      })
+      this.$style.subscribe(_ => m.redraw())
+    },
+    view() {
+      return m(
+        '#smarttoc',
+        {
+          class: [
+            theme || 'light',
+            headings.filter(h => h.level <= 2).length > 50 && 'lengthy',
+            $isShow() ? '' : 'hidden'
+          ]
+            .filter(Boolean)
+            .join(' '),
+          style: this.$style && this.$style()
+        },
+        [m(handle), m(toc)]
+      )
     }
-  })
-
-  setTimeout(() => {
-    // wait until node is mounted
-    // you can addEventListener() BEFORE adding to DOM
-    // but elem.getBoundingRect() will return all zeros
-
-    const { direction } = getOptimalContainerPos(article)
-
-    const $containerStyle = makeSticky({
-      ref: article,
-      scrollable: scrollable,
-      popper: container,
-      direction: direction,
-      gap: ARTICLE_TOC_GAP,
-      $topMargin: $topbarHeight.map(h => (h || 0) + 50),
-      $refChange: $relayout,
-      $scroll: $scroll,
-      $offset: $userOffset
-    })
-
-    $containerStyle.subscribe(style => applyStyle(container, style, true))
-  }, 0)
-
-  return container
+  }
 }
 
 export default Container

@@ -3,7 +3,6 @@ import {
   num,
   log,
   draw,
-  mount,
   scrollTo,
   unique,
   safe,
@@ -14,6 +13,7 @@ import tocCSS from '../style/toc.css'
 import Stream from './helpers/stream'
 import Container from './component/Container'
 import Extender from './component/Extender'
+import m from 'mithril'
 
 const relayoutStream = function(article, $resize, $isShow) {
   const readableStyle = function(article) {
@@ -273,7 +273,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     $topbarHeight,
     onClickHeading
   })
-  mount(document.body, container)
+  m.mount(document.body.appendChild(document.createElement('DIV')), container)
 
   // now show what we've found
   if (article.getBoundingClientRect().top > window.innerHeight - 50) {
