@@ -2,7 +2,7 @@ import { scrollTo } from '../helpers/util'
 import m from 'mithril'
 
 const restrictScroll = function(e) {
-  const toc = e.target
+  const toc = e.currentTarget
   const maxScroll = toc.scrollHeight - toc.offsetHeight
   if (toc.scrollTop + e.deltaY < 0) {
     toc.scrollTop = 0
