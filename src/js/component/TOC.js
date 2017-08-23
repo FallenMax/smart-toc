@@ -54,7 +54,7 @@ const TOC = function({ headings, $activeHeading, onClickHeading }) {
 
   const UL = (children, { isRoot = false } = {}) =>
     m(
-      'ul' + (isRoot ? '#root' : ''),
+      'ul',
       { onwheel: isRoot && restrictScroll, onclick: isRoot && onClickHeading },
       children.map(LI)
     )

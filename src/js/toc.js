@@ -203,6 +203,15 @@ const getTheme = function(article) {
   }
 }
 
+const getRoot = function() {
+  let root = document.getElementById('smarttoc_wrapper')
+  if (!root) {
+    root = document.body.appendChild(document.createElement('DIV'))
+    root.id = 'smarttoc_wrapper'
+  }
+  return root
+}
+
 export default function createTOC({ article, headings, userOffset = [0, 0] }) {
   headings = addAnchors(headings)
   insertCSS(tocCSS, 'smarttoc__css')
@@ -260,20 +269,22 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     )
   }
 
-  const container = Container({
-    article,
-    scrollable,
-    headings,
-    theme,
-    $activeHeading,
-    $isShow,
-    $userOffset,
-    $relayout,
-    $scroll,
-    $topbarHeight,
-    onClickHeading
-  })
-  m.mount(document.body.appendChild(document.createElement('DIV')), container)
+  m.mount(
+    getRoot(),
+    Container({
+      article,
+      scrollable,
+      headings,
+      theme,
+      $activeHeading,
+      $isShow,
+      $userOffset,
+      $relayout,
+      $scroll,
+      $topbarHeight,
+      onClickHeading
+    })
+  )
 
   // now show what we've found
   if (article.getBoundingClientRect().top > window.innerHeight - 50) {
@@ -320,7 +331,7 @@ export default function createTOC({ article, headings, userOffset = [0, 0] }) {
     dispose: () => {
       log('dispose')
       $isShow(false)
-      container && container.remove()
+      m.render(getRoot(), m(''))
       return { userOffset: $userOffset() }
     }
   }
