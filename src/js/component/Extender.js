@@ -1,12 +1,12 @@
 import Stream from '../helpers/stream'
 import { num, applyStyle, getScroll } from '../helpers/util'
 
-const Extender = function({ headings, scrollable, $isShow, $relayout }) {
+const Extender = function({ $headings, scrollable, $isShow, $relayout }) {
   const $extender = Stream()
   // toc: extend body height so we can scroll to the last heading
   let extender = document.createElement('DIV')
   extender.id = 'smarttoc-extender'
-  Stream.combine($isShow, $relayout, isShow => {
+  Stream.combine($isShow, $relayout, $headings, (isShow, _, headings) => {
     setTimeout(() => {
       // some delay to ensure page is stable ?
       let lastHeading = headings.slice(-1)[0].node

@@ -1,5 +1,6 @@
 import { scrollTo } from '../helpers/util'
 import m from 'mithril'
+import Stream from '../helpers/stream'
 
 const restrictScroll = function(e) {
   const toc = e.currentTarget
@@ -11,9 +12,10 @@ const restrictScroll = function(e) {
     toc.scrollTop = maxScroll
     e.preventDefault()
   }
+  e.redraw = false
 }
 
-const TOC = function({ headings, $activeHeading, onClickHeading }) {
+const TOC = function({ $headings, $activeHeading, onClickHeading }) {
   // $activeHeading.subscribe(activeIndex => {})
   const toTree = function(headings) {
     let i = 0
@@ -89,10 +91,13 @@ const TOC = function({ headings, $activeHeading, onClickHeading }) {
           })
         }
       })
+      Stream.combine($headings, $activeHeading, () => null).subscribe(_ =>
+        m.redraw()
+      )
     },
     view() {
-      headings.forEach((h, i) => (h.isActive = i === $activeHeading()))
-      const tree = toTree(headings)
+      $headings().forEach((h, i) => (h.isActive = i === $activeHeading()))
+      const tree = toTree($headings())
       return UL(tree.children, { isRoot: true })
     }
   }

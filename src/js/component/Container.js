@@ -123,7 +123,7 @@ const getOptimalContainerPos = function(article) {
 const Container = function({
   article,
   scrollable,
-  headings,
+  $headings,
   theme,
   $activeHeading,
   $isShow,
@@ -134,7 +134,7 @@ const Container = function({
   onClickHeading
 }) {
   const handle = Handle({ $userOffset })
-  const toc = TOC({ headings, $activeHeading, onClickHeading })
+  const toc = TOC({ $headings, $activeHeading, onClickHeading })
   return {
     oncreate({ dom }) {
       const { direction } = getOptimalContainerPos(article)
@@ -157,7 +157,7 @@ const Container = function({
         {
           class: [
             theme || 'light',
-            headings.filter(h => h.level <= 2).length > 50 && 'lengthy',
+            $headings().filter(h => h.level <= 2).length > 50 && 'lengthy',
             $isShow() ? '' : 'hidden'
           ]
             .filter(Boolean)

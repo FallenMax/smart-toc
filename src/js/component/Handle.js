@@ -14,11 +14,13 @@ const Handle = function({ $userOffset }) {
     stop(e)
     let [dX, dY] = [e.clientX - sClientX, e.clientY - sClientY]
     $userOffset([sOffsetX + dX, sOffsetY + dY])
+    e.redraw = false
   })
 
   const onDragEnd = e => {
     window.removeEventListener('mousemove', onDrag)
     window.removeEventListener('mouseup', onDragEnd)
+    e.redraw = false
   }
 
   const onDragStart = e => {
@@ -31,6 +33,7 @@ const Handle = function({ $userOffset }) {
       window.addEventListener('mousemove', onDrag)
       window.addEventListener('mouseup', onDragEnd)
     }
+    e.redraw = false
   }
 
   return {
