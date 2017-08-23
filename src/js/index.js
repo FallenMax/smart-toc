@@ -8,7 +8,7 @@ if (isMasterFrame(window)) {
 
   const generate = function(option = {}) {
     let [article, $headings] = extract()
-    if (article && $headings) {
+    if (article && $headings && $headings().length) {
       return createTOC(Object.assign({ article, $headings }, option))
     } else {
       toast('No article/headings are detected.')

@@ -77,18 +77,20 @@ const TOC = function({ $headings, $activeHeading, onClickHeading }) {
       // scroll to heading if out of view
       $activeHeading.subscribe(index => {
         const target = [].slice.apply(dom.querySelectorAll('.active')).pop()
-        const targetRect = target.getBoundingClientRect()
-        const containerRect = dom.getBoundingClientRect()
-        const outOfView =
-          targetRect.top > containerRect.bottom ||
-          targetRect.bottom < containerRect.top
-        if (outOfView) {
-          scrollTo({
-            targetElem: target,
-            scrollElem: dom,
-            maxDuration: 0,
-            topMargin: dom.offsetHeight / 2 - target.offsetHeight / 2
-          })
+        if (target) {
+          const targetRect = target.getBoundingClientRect()
+          const containerRect = dom.getBoundingClientRect()
+          const outOfView =
+            targetRect.top > containerRect.bottom ||
+            targetRect.bottom < containerRect.top
+          if (outOfView) {
+            scrollTo({
+              targetElem: target,
+              scrollElem: dom,
+              maxDuration: 0,
+              topMargin: dom.offsetHeight / 2 - target.offsetHeight / 2
+            })
+          }
         }
       })
       Stream.combine($headings, $activeHeading, () => null).subscribe(_ =>
