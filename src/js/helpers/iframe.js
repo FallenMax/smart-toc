@@ -7,11 +7,12 @@ function getRootWindow() {
 }
 
 function getMaster(root) {
-  if (root.frames.length === 0) {
+  const iframes = [].slice.apply(root.document.getElementsByTagName('iframe'))
+
+  if (iframes.length === 0) {
     return root
   } else {
-    const largestChild = [].slice
-      .apply(root.document.getElementsByTagName('iframe'))
+    const largestChild = iframes
       .map(f => ({
         elem: f,
         area: f.offsetWidth * f.offsetHeight
