@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Smart TOC",
-  "version": "0.3.22",
+  "version": "0.3.23",
   "description": "Add a table of contents for web article or documentation ",
   "browser_action": {
     "default_icon": "icon.png",
