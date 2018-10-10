@@ -6,7 +6,9 @@
   all: initial;
 }
 
-#smarttoc * {
+#smarttoc *,
+#smarttoc *::before,
+#smarttoc *::after {
   all: unset;
 }
 
