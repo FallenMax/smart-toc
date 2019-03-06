@@ -1,17 +1,21 @@
 import replace from 'rollup-plugin-replace'
-import string from 'rollup-plugin-string'
+import { string } from 'rollup-plugin-string'
 import nodeResolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
+import ts from 'rollup-plugin-typescript2'
 
 export default {
-  entry: 'src/js/index.js',
-  format: 'iife',
-  moduleName: 'smarttoc',
-  dest: 'dist/toc.js',
+  input: 'src/content/index.ts',
+  output: {
+    format: 'iife',
+    file: 'dist/toc.js',
+    name: 'smarttoc',
+  },
   plugins: [
+    ts(),
     nodeResolve({ main: true, browser: true }),
     commonjs(),
     string({ include: '**/*.css' }),
-    replace({ __DEV__: !!process.env.DEV })
-  ]
+    replace({ __DEV__: Boolean(process.env.DEV) }),
+  ],
 }
