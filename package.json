@@ -5,10 +5,10 @@
   "main": "src/js/index.js",
   "scripts": {
     "clean": "rm -rf dist/* smart-toc.zip",
-    "start": "export DEV=true && npm run build && rollup --config rollup.config.js --watch",
-    "build": "npm run clean; npm run build:content && npm run build:background && npm run build:zip",
+    "start": "export ENV=development && npm run build:background && rollup --config rollup.config.js --watch",
+    "build": "export ENV=production && npm run clean; npm run build:content && npm run build:background && npm run build:zip",
     "build:content": "rollup --config rollup.config.js",
-    "build:background": "cp -R src/background/* dist/",
+    "build:background": "mkdir -p dist && cp -R src/background/* dist/",
     "build:zip": "zip -r smart-toc.zip dist"
   },
   "repository": {

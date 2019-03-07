@@ -17,7 +17,7 @@ if (window === getContentWindow()) {
     const article = extractArticle()
     const headings = article && extractHeadings(article)
     if (!(article && headings && headings.length)) {
-      showToast('todo')
+      showToast('No article/headings are detected.')
       return
     }
     if (toc) {

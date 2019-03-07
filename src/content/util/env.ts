@@ -1,1 +1,1 @@
-export const isDebugging = true
+export const isDebugging = /dev/.test(process.env.ENV || '')

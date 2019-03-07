@@ -12,10 +12,14 @@ export default {
     name: 'smarttoc',
   },
   plugins: [
+    replace({
+      'process.env': JSON.stringify({
+        ENV: process.env.ENV,
+      }),
+    }),
     ts(),
     nodeResolve({ main: true, browser: true }),
     commonjs(),
     string({ include: '**/*.css' }),
-    replace({ __DEV__: Boolean(process.env.DEV) }),
   ],
 }
