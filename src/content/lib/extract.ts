@@ -48,7 +48,7 @@ export const extractArticle = function(): HTMLElement | undefined {
     elems.forEach((elem) => {
       let weights = ARTICLE_TAG_WEIGHTS[selector]
       if (selector.toLowerCase() === 'strong') {
-        if (!(elem.parentElement && elem.parentElement.tagName === 'p')) {
+        if (!(elem.parentElement && elem.parentElement.tagName === 'P')) {
           return
         }
       }
@@ -129,12 +129,18 @@ export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
         articleDom.getElementsByTagName(tag),
       ) as HTMLElement[]).filter((elem) => {
         if (tag.toLowerCase() === 'strong') {
-          if (!(elem.parentElement && elem.parentElement.tagName === 'p')) {
+          console.log(
+            'elem.parentElement && elem.parentElement.tagName ',
+            elem.parentElement && elem.parentElement.tagName,
+          )
+          if (!(elem.parentElement && elem.parentElement.tagName === 'P')) {
             return false
           }
         }
         return true
       })
+      console.log(tag, elems)
+
       return {
         tag,
         elems,
