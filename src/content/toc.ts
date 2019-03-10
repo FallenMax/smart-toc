@@ -278,7 +278,7 @@ export function createToc(options: {
     } else {
       leaveReadableMode(content)
     }
-    $triggerContentChange()
+    $triggerContentChange(null)
   })
 
   const validate = (content: Content): void => {
