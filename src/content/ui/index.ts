@@ -88,7 +88,12 @@ export const ui = {
 
     m.mount(root, {
       view() {
-        if (!$isShown()) {
+        if (
+          !$isShown() ||
+          !$article() ||
+          !$scroller() ||
+          !($headings() && $headings().length)
+        ) {
           return null
         }
         return m(
