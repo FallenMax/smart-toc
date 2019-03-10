@@ -53,7 +53,7 @@ const appendExtender = (content: Content, topbarHeight: number): void => {
 
   extender.style.height = additionalVerticalSpaceNeeded + 'px'
   if (isDebugging) {
-    console.log('extender.style.height ', additionalVerticalSpaceNeeded)
+    console.log('[extender] height: ', additionalVerticalSpaceNeeded)
   }
 }
 const removeExtender = (): void => {

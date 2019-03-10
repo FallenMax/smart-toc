@@ -39,19 +39,48 @@ const ARTICLE_TAG_WEIGHTS: { [Selector: string]: number[] } = {
   '.comment': [-500, -100, -50],
 }
 
+const getElemsCommonLeft = (elems: HTMLElement[]): number | undefined => {
+  if (!elems.length) {
+    return undefined
+  }
+  const lefts: { [Left: number]: number } = {}
+  elems.forEach((el) => {
+    const left = el.getBoundingClientRect().left
+    if (!lefts[left]) {
+      lefts[left] = 0
+    }
+    lefts[left]++
+  })
+  const count = elems.length
+
+  const isAligned = Object.keys(lefts).length <= Math.ceil(0.3 * count)
+  if (!isAligned) {
+    return undefined
+  }
+  const sortedByCount = Object.keys(lefts).sort((a, b) => lefts[b] - lefts[a])
+  const most = Number(sortedByCount[0])
+  return most
+}
+
 export const extractArticle = function(): HTMLElement | undefined {
   const elemScores = new Map<HTMLElement, number>()
 
   // weigh nodes by factor: "selector" "distance from this node"
   Object.keys(ARTICLE_TAG_WEIGHTS).forEach((selector) => {
-    const elems = toArray(document.querySelectorAll(selector))
-    elems.forEach((elem) => {
-      let weights = ARTICLE_TAG_WEIGHTS[selector]
-      if (selector.toLowerCase() === 'strong') {
-        if (!(elem.parentElement && elem.parentElement.tagName === 'P')) {
-          return
-        }
+    let elems = toArray(document.querySelectorAll(selector)) as HTMLElement[]
+    if (selector.toLowerCase() === 'strong') {
+      // for <strong> elements, only take them as heading when they align at left
+      const commonLeft = getElemsCommonLeft(elems)
+      if (commonLeft === undefined || commonLeft > window.innerWidth / 2) {
+        elems = []
+      } else {
+        elems = elems.filter(
+          (elem) => elem.getBoundingClientRect().left === commonLeft,
+        )
       }
+    }
+    elems.forEach((elem) => {
+      const weights = ARTICLE_TAG_WEIGHTS[selector]
       const ancestors = getAncestors(elem as HTMLElement, weights.length)
       ancestors.forEach((elem, distance) => {
         elemScores.set(
@@ -115,48 +144,55 @@ const HEADING_TAG_WEIGHTS = {
 }
 export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
   const isVisible = (elem: HTMLElement) => elem.offsetHeight !== 0
-  const isGroupVisible = (headings: HTMLElement[]) =>
-    headings.filter(isVisible).length >= headings.length * 0.5
-
-  interface HeadingTagGroup {
+  type HeadingGroup = {
     tag: string
     elems: HTMLElement[]
     score: number
   }
-  const headingTagGroups: HeadingTagGroup[] = Object.keys(HEADING_TAG_WEIGHTS)
-    .map((tag, i) => {
-      const elems = (toArray(
-        articleDom.getElementsByTagName(tag),
-      ) as HTMLElement[]).filter((elem) => {
+
+  const isHeadingGroupVisible = (group: HeadingGroup) => {
+    return group.elems.filter(isVisible).length >= group.elems.length * 0.5
+  }
+
+  const headingTagGroups: HeadingGroup[] = Object.keys(HEADING_TAG_WEIGHTS)
+    .map(
+      (tag): HeadingGroup => {
+        let elems = toArray(
+          articleDom.getElementsByTagName(tag),
+        ) as HTMLElement[]
         if (tag.toLowerCase() === 'strong') {
-          console.log(
-            'elem.parentElement && elem.parentElement.tagName ',
-            elem.parentElement && elem.parentElement.tagName,
-          )
-          if (!(elem.parentElement && elem.parentElement.tagName === 'P')) {
-            return false
+          // for <strong> elements, only take them as heading when they align at left
+          const commonLeft = getElemsCommonLeft(elems)
+          if (commonLeft === undefined || commonLeft > window.innerWidth / 2) {
+            elems = []
+          } else {
+            elems = elems.filter(
+              (elem) => elem.getBoundingClientRect().left === commonLeft,
+            )
           }
         }
-        return true
-      })
-      console.log(tag, elems)
-
-      return {
-        tag,
-        elems,
-        score: elems.length * HEADING_TAG_WEIGHTS[tag],
-      }
-    })
-    .filter((heading) => heading.score >= 10)
-    .filter((heading) => isGroupVisible(heading.elems))
+        return {
+          tag,
+          elems,
+          score: elems.length * HEADING_TAG_WEIGHTS[tag],
+        }
+      },
+    )
+    .filter((group) => group.score >= 10 && group.elems.length > 0)
+    .filter((group) => isHeadingGroupVisible(group))
     .slice(0, 3)
 
   // use document sequence
   const headingTags = headingTagGroups.map((headings) => headings.tag)
-  const acceptNode = (node: HTMLElement) =>
-    headingTags.includes(node.tagName) && isVisible(node)
+  const acceptNode = (node: HTMLElement) => {
+    const group = headingTagGroups.find((g) => g.tag === node.tagName)
+    if (!group) {
+      return NodeFilter.FILTER_SKIP
+    }
+    return group.elems.includes(node) && isVisible(node)
       ? NodeFilter.FILTER_ACCEPT
       : NodeFilter.FILTER_SKIP
+  }
   const treeWalker = document.createTreeWalker(
     articleDom,
     NodeFilter.SHOW_ELEMENT,
