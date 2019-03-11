@@ -332,8 +332,10 @@ class StreamClass<T extends VV> {
 
   log(name: string): this {
     this.displayName = name
-    const logger = createLogger('$' + name)
-    this.subscribe(logger)
+    if (isDebugging) {
+      const logger = createLogger('$' + name)
+      this.subscribe(logger)
+    }
     return this
   }
 
