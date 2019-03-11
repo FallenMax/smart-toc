@@ -69,8 +69,10 @@ export const TocContent: m.FactoryComponent<{
   article: Article
   headings: Heading[]
   activeHeading: number
-  onScrollToHeading(index: number): void
+  onScrollToHeading(index: number): Promise<void>
 }> = () => {
+  let isScrollingToHeading = false
+
   const revealActiveHeading = (
     tocPanelDom: HTMLElement,
     headingDom: HTMLElement,
@@ -93,6 +95,9 @@ export const TocContent: m.FactoryComponent<{
 
   return {
     onupdate(vnode) {
+      if (isScrollingToHeading) {
+        return
+      }
       const activeHeadings = toArray(vnode.dom.querySelectorAll('.active'))
       const activeHeading = activeHeadings[activeHeadings.length - 1] // could have several '.active' headings (for multiple levels)
       if (activeHeading) {
@@ -113,12 +118,14 @@ export const TocContent: m.FactoryComponent<{
             onwheel: isRoot && restrictScroll,
             onclick:
               isRoot &&
-              ((e: MouseEvent) => {
+              (async (e: MouseEvent) => {
                 e.preventDefault()
                 e.stopPropagation()
                 const index = Number((e.target as HTMLElement).dataset.index)
                 if (!Number.isNaN(index)) {
-                  onScrollToHeading(index)
+                  isScrollingToHeading = true
+                  await onScrollToHeading(index)
+                  isScrollingToHeading = false
                 }
               }),
           },

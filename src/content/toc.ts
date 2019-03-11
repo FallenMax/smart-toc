@@ -266,20 +266,25 @@ export function createToc(options: {
     .log('readable')
 
   //-------------- Effects --------------
-  const scrollToHeading = (headingIndex: number) => {
-    const { headings, scroller } = $content()
-    const topbarHeight = $topbarHeight()
-    const heading = headings[headingIndex]
-    if (heading) {
-      smoothScroll({
-        target: heading.dom,
-        scroller: scroller.dom,
-        topMargin: topbarHeight || 0 + 10,
-        callback() {
-          $triggerTopbarMeasure(heading.dom)
-        },
-      })
-    }
+  const scrollToHeading = (headingIndex: number): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const { headings, scroller } = $content()
+      const topbarHeight = $topbarHeight()
+      const heading = headings[headingIndex]
+      if (heading) {
+        smoothScroll({
+          target: heading.dom,
+          scroller: scroller.dom,
+          topMargin: topbarHeight || 0 + 10,
+          callback() {
+            $triggerTopbarMeasure(heading.dom)
+            resolve()
+          },
+        })
+      } else {
+        resolve()
+      }
+    })
   }
 
   $readableMode.subscribe((enableReadableMode) => {

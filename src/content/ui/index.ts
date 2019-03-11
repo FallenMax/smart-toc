@@ -57,7 +57,7 @@ export const ui = {
     $activeHeading: Stream<number>
     $topbarHeight: Stream<number>
     onDrag(offset: Offset): void
-    onScrollToHeading(index: number): void
+    onScrollToHeading(index: number): Promise<void>
   }) => {
     const {
       $isShown,
