@@ -2,7 +2,6 @@ import { createToc, Toc, TocPreference } from './toc'
 import { getContentWindow } from './lib/iframe'
 import { extractArticle, extractHeadings } from './lib/extract'
 import { showToast } from './util/toast'
-import { isDebugging } from './util/env'
 
 if (window === getContentWindow()) {
   let preference: TocPreference = {
@@ -11,9 +10,6 @@ if (window === getContentWindow()) {
   let toc: Toc | undefined
 
   const start = (): void => {
-    if (isDebugging) {
-      console.clear()
-    }
     const article = extractArticle()
     const headings = article && extractHeadings(article)
     if (!(article && headings && headings.length)) {

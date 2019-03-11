@@ -99,6 +99,7 @@ function activeHeadingStream({
 
 function contentStream({
   $isShown,
+  $periodicCheck,
   $triggerContentChange,
   article,
   scroller,
@@ -108,13 +109,12 @@ function contentStream({
   scroller: HTMLElement
   $triggerContentChange: Stream<null>
   $isShown: Stream<boolean>
+  $periodicCheck: Stream<null>
   addDisposer: (unsub: () => void) => number
 }) {
   const $resize = Stream.fromEvent(window, 'resize', addDisposer)
     .throttle(100)
     .log('resize')
-
-  const $periodicCheck = Stream.fromInterval(1000 * 5, addDisposer).log('check')
 
   const $content: Stream<Content> = Stream.merge([
     $triggerContentChange,
@@ -228,6 +228,7 @@ export function createToc(options: {
   )
   const $triggerContentChange = Stream<null>(null).log('triggerContentChange')
   const $triggerIsShown = Stream<boolean>().log('triggerIsShown')
+  const $periodicCheck = Stream.fromInterval(1000 * 5, addDisposer).log('check')
 
   //-------------- Observables --------------
   const $isShown = $triggerIsShown.unique().log('isShown')
@@ -236,6 +237,7 @@ export function createToc(options: {
 
   const $content = contentStream({
     $triggerContentChange,
+    $periodicCheck,
     $isShown,
     article,
     scroller,
@@ -254,6 +256,15 @@ export function createToc(options: {
     options.preference.offset,
   ).log('offset')
 
+  const $readableMode = Stream.combine([
+    $isShown.unique(),
+    $content.map((c) => c.article.dom).unique(),
+    $content.map((c) => c.scroller.dom).unique(),
+    $content.map((c) => c.headings.length).unique(),
+  ])
+    .map(([isShown]) => isShown)
+    .log('readable')
+
   //-------------- Effects --------------
   const scrollToHeading = (headingIndex: number) => {
     const { headings, scroller } = $content()
@@ -271,12 +282,11 @@ export function createToc(options: {
     }
   }
 
-  $isShown.subscribe((isShown) => {
-    const content = $content()
-    if (isShown) {
-      enterReadableMode(content, { topbarHeight: $topbarHeight() })
+  $readableMode.subscribe((enableReadableMode) => {
+    if (enableReadableMode) {
+      enterReadableMode($content(), { topbarHeight: $topbarHeight() })
     } else {
-      leaveReadableMode(content)
+      leaveReadableMode()
     }
     $triggerContentChange(null)
   })

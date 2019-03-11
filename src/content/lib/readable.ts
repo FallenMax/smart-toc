@@ -3,8 +3,7 @@ import { between } from '../util/math/between'
 import { applyStyle } from '../util/dom/css'
 import { Content, Heading } from '../types'
 import { isDebugging } from '../util/env'
-
-let readableMode = false
+import { toArray } from '../util/dom/to_array'
 
 //-------------- container extender  --------------
 
@@ -65,14 +64,15 @@ const removeExtender = (): void => {
 
 //-------------- apply readable style --------------
 
-let originStyle: string = ''
-const applyReadableStyle = (article: HTMLElement): void => {
-  if (readableMode) {
-    return
-  }
+const DATASET_ARTICLE = 'smarttocArticle'
+const DATASET_ARTICLE__CAMELCASE = 'smarttoc-article'
+const DATASET_ORIGIN_STYLE = 'smarttocOriginStyle'
 
-  readableMode = true
-  originStyle = article.style.cssText
+const applyReadableStyle = (article: HTMLElement): void => {
+  article.dataset[DATASET_ARTICLE] = '1'
+  if (!article.dataset[DATASET_ORIGIN_STYLE]) {
+    article.dataset[DATASET_ORIGIN_STYLE] = article.style.cssText
+  }
 
   const computed = window.getComputedStyle(article)
   if (!computed) throw new Error('article should be element')
@@ -88,24 +88,39 @@ const applyReadableStyle = (article: HTMLElement): void => {
     readableStyle.marginRight = 'auto'
   }
   readableStyle.maxWidth = px(bestWidth)
-
   applyStyle(article, readableStyle)
 }
-const removeReadableStyle = (article: HTMLElement): void => {
-  if (readableMode) {
-    applyStyle(article, originStyle)
-    readableMode = false
-  }
+
+const removeReadableStyle = (): void => {
+  const articles = toArray(
+    document.querySelectorAll(`[data-${DATASET_ARTICLE__CAMELCASE}]`),
+  ) as HTMLElement[]
+  articles.forEach((article) => {
+    if (article.dataset[DATASET_ORIGIN_STYLE]) {
+      applyStyle(article, article.dataset[DATASET_ORIGIN_STYLE])
+    }
+    delete article.dataset[DATASET_ARTICLE]
+    delete article.dataset[DATASET_ORIGIN_STYLE]
+  })
 }
 
 export const enterReadableMode = (
   content: Content,
   { topbarHeight }: { topbarHeight: number },
 ): void => {
+  leaveReadableMode()
+
+  if (isDebugging) {
+    console.log('[readable mode] enter')
+  }
   applyReadableStyle(content.article.dom)
   appendExtender(content, topbarHeight)
 }
-export const leaveReadableMode = (content: Content): void => {
-  removeReadableStyle(content.article.dom)
+
+export const leaveReadableMode = (): void => {
+  if (isDebugging) {
+    console.log('[readable mode] leave')
+  }
+  removeReadableStyle()
   removeExtender()
 }
