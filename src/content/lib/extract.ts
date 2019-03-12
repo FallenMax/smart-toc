@@ -14,13 +14,13 @@ const getAncestors = function(elem: HTMLElement, maxDepth = -1): HTMLElement[] {
 }
 
 const ARTICLE_TAG_WEIGHTS: { [Selector: string]: number[] } = {
-  h1: [0, 100, 60, 40, 30, 25, 22].map((s) => s * 0.4),
-  h2: [0, 100, 60, 40, 30, 25, 22],
-  h3: [0, 100, 60, 40, 30, 25, 22].map((s) => s * 0.5),
-  h4: [0, 100, 60, 40, 30, 25, 22].map((s) => s * 0.5 * 0.5),
-  h5: [0, 100, 60, 40, 30, 25, 22].map((s) => s * 0.5 * 0.5 * 0.5),
-  strong: [0, 100, 60, 40, 30, 25, 22].map((s) => s * 0.5 * 0.5 * 0.5),
-  h6: [0, 100, 60, 40, 30, 25, 22].map((s) => s * 0.5 * 0.5 * 0.5 * 0.5),
+  h1: [0, 100, 60, 40, 30, 25, 22, 18].map((s) => s * 0.4),
+  h2: [0, 100, 60, 40, 30, 25, 22, 18],
+  h3: [0, 100, 60, 40, 30, 25, 22, 18].map((s) => s * 0.5),
+  h4: [0, 100, 60, 40, 30, 25, 22, 18].map((s) => s * 0.5 * 0.5),
+  h5: [0, 100, 60, 40, 30, 25, 22, 18].map((s) => s * 0.5 * 0.5 * 0.5),
+  h6: [0, 100, 60, 40, 30, 25, 22, 18].map((s) => s * 0.5 * 0.5 * 0.5 * 0.5),
+  strong: [0, 100, 60, 40, 30, 25, 22, 18].map((s) => s * 0.5 * 0.5 * 0.5),
   article: [500],
   '.article': [500],
   '#article': [500],
@@ -126,6 +126,15 @@ export const extractArticle = function(): HTMLElement | undefined {
       }
     })
     .sort((a, b) => b.score - a.score)
+
+  if (isDebugging) {
+    console.log('[extract]', {
+      elemScores,
+      sortedByScore,
+      candicates,
+      reweighted,
+    })
+  }
   const article = reweighted.length ? reweighted[0].elem : undefined
   if (isDebugging) {
     draw(article, 'red')

@@ -228,7 +228,9 @@ export function createToc(options: {
   )
   const $triggerContentChange = Stream<null>(null).log('triggerContentChange')
   const $triggerIsShown = Stream<boolean>().log('triggerIsShown')
-  const $periodicCheck = Stream.fromInterval(1000 * 5, addDisposer).log('check')
+  const $periodicCheck = Stream.fromInterval(1000 * 60, addDisposer).log(
+    'check',
+  )
 
   //-------------- Observables --------------
   const $isShown = $triggerIsShown.unique().log('isShown')
