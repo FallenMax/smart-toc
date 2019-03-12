@@ -70,9 +70,7 @@ const DATASET_ORIGIN_STYLE = 'smarttocOriginStyle'
 
 const applyReadableStyle = (article: HTMLElement): void => {
   article.dataset[DATASET_ARTICLE] = '1'
-  if (!article.dataset[DATASET_ORIGIN_STYLE]) {
-    article.dataset[DATASET_ORIGIN_STYLE] = article.style.cssText
-  }
+  article.dataset[DATASET_ORIGIN_STYLE] = article.style.cssText
 
   const computed = window.getComputedStyle(article)
   if (!computed) throw new Error('article should be element')
@@ -96,9 +94,7 @@ const removeReadableStyle = (): void => {
     document.querySelectorAll(`[data-${DATASET_ARTICLE__CAMELCASE}]`),
   ) as HTMLElement[]
   articles.forEach((article) => {
-    if (article.dataset[DATASET_ORIGIN_STYLE]) {
-      applyStyle(article, article.dataset[DATASET_ORIGIN_STYLE])
-    }
+    applyStyle(article, article.dataset[DATASET_ORIGIN_STYLE])
     delete article.dataset[DATASET_ARTICLE]
     delete article.dataset[DATASET_ORIGIN_STYLE]
   })
