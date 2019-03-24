@@ -260,8 +260,8 @@ export function createToc(options: {
 
   const $readableMode = Stream.combine([
     $isShown.unique(),
-    $content.map((c) => c.article.dom).unique(),
-    $content.map((c) => c.scroller.dom).unique(),
+    $content.map((c) => c.article.height).unique(),
+    $content.map((c) => c.scroller.rect.height).unique(),
     $content.map((c) => c.headings.length).unique(),
   ])
     .map(([isShown]) => isShown)

@@ -1,2 +1,0 @@
-- [x] auto check article
-- [ ] update on article change
