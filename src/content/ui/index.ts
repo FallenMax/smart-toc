@@ -9,12 +9,6 @@ import { TocContent } from './toc_content'
 const ROOT_ID = 'smarttoc-wrapper'
 const CSS_ID = 'smarttoc__css'
 
-function translate3d(x = 0, y = 0, z = 0): string {
-  return `translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${Math.round(
-    z,
-  )}px)`
-}
-
 const calcStyle = function(options: {
   article: Article
   scroller: Scroller
@@ -40,7 +34,8 @@ const calcStyle = function(options: {
   const y = Math.max(scrollableTop, topMargin) + 50
 
   const style = {
-    transform: translate3d(x + offset.x, y + offset.y),
+    left: `${x + offset.x}px`,
+    top: `${y + offset.y}px`,
     maxHeight: `calc(100vh - ${y}px - 50px)`,
   }
 
