@@ -74,6 +74,7 @@ const applyReadableStyle = (article: HTMLElement): void => {
 
   const computed = window.getComputedStyle(article)
   if (!computed) throw new Error('article should be element')
+  const rect = article.getBoundingClientRect()
 
   let bestWidth = between(12, num(computed.fontSize!), 16) * 66
   if (computed['box-sizing'] === 'border-box') {
@@ -81,11 +82,13 @@ const applyReadableStyle = (article: HTMLElement): void => {
   }
 
   let readableStyle = {} as CSSStyleDeclaration
-  if (!(num(computed.marginLeft!) || num(computed.marginRight!))) {
-    readableStyle.marginLeft = 'auto'
-    readableStyle.marginRight = 'auto'
+  if (bestWidth < rect.width) {
+    readableStyle.maxWidth = px(bestWidth)
+    if (!(num(computed.marginLeft!) || num(computed.marginRight!))) {
+      readableStyle.marginLeft = 'auto'
+      readableStyle.marginRight = 'auto'
+    }
   }
-  readableStyle.maxWidth = px(bestWidth)
   applyStyle(article, readableStyle)
 }
 

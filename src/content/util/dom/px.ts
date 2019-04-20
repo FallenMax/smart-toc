@@ -1,6 +1,14 @@
 // '12px' => 12
-export const num = (size: string | number = '0'): number =>
-  typeof size === 'number' ? size : +size.replace(/px/, '')
+export const num = (size: string | number | null = '0'): number => {
+  if (!size) return NaN
+  if (typeof size === 'number') return size
+  if (/px$/.test(size)) {
+    return +size.replace(/px/, '')
+  }
+  return NaN
+}
 
-// '12px' <= 12
-export const px = (size: string | number = 0): string => num(size) + 'px'
+// 12 => '12px'
+export const px = (size: string | number = 0): string => {
+  return num(size) + 'px'
+}
