@@ -9,11 +9,24 @@ import { TocContent } from './toc_content'
 const ROOT_ID = 'smarttoc-wrapper'
 const CSS_ID = 'smarttoc__css'
 
+const calcPlacement = function(article: Article): 'left' | 'right' {
+  const { left, right } = article
+  const winWidth = window.innerWidth
+  const panelMinWidth = 250
+  const spaceRight = winWidth - right
+  const spaceLeft = left
+  const gap = 80
+  return spaceRight < panelMinWidth + gap && spaceLeft > panelMinWidth + gap
+    ? 'left'
+    : 'right'
+}
+
 const calcStyle = function(options: {
   article: Article
   scroller: Scroller
   offset: Offset
   topMargin: number
+  placement: 'left' | 'right'
 }): Partial<CSSStyleDeclaration> {
   const { article, scroller, offset, topMargin } = options
 
@@ -21,11 +34,9 @@ const calcStyle = function(options: {
   const { left, right } = article
   const winWidth = window.innerWidth
   const panelMinWidth = 250
-  const spaceRight = winWidth - right
-  const spaceLeft = left
   const gap = 80
   const x =
-    spaceRight < panelMinWidth + gap && spaceLeft > panelMinWidth + gap
+    options.placement === 'left'
       ? Math.max(0, left - gap - panelMinWidth) // place at left
       : Math.min(right + gap, winWidth - panelMinWidth) // place at right
 
@@ -81,6 +92,8 @@ export const ui = {
     const isTooManyHeadings = () =>
       $headings().filter((h) => h.level <= 2).length > 50
 
+    let initialPlacement: 'left' | 'right'
+
     m.mount(root, {
       view() {
         if (
@@ -91,6 +104,10 @@ export const ui = {
         ) {
           return null
         }
+        if (!initialPlacement) {
+          initialPlacement = calcPlacement($article())
+        }
+
         return m(
           'nav#smarttoc',
           {
@@ -100,6 +117,7 @@ export const ui = {
               scroller: $scroller(),
               offset: $offset(),
               topMargin: $topbarHeight() || 0,
+              placement: initialPlacement,
             }),
           },
           [
