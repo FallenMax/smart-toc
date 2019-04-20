@@ -2,6 +2,7 @@ import { isDebugging } from '../util/env'
 import { draw } from '../util/debug'
 import { Heading } from '../types'
 import { toArray } from '../util/dom/to_array'
+import { canScroll } from './scroll'
 
 const getAncestors = function(elem: HTMLElement, maxDepth = -1): HTMLElement[] {
   const ancestors: HTMLElement[] = []
@@ -100,7 +101,7 @@ export const extractArticle = function(): HTMLElement | undefined {
       return { elem, score }
     })
 
-  // re-weigh by factor:  "take-lots-vertical-space", "contain-less-links", "not-too-narrow"
+  // re-weigh by factor:  "take-lots-vertical-space", "contain-less-links", "not-too-narrow", "cannot-scroll"
   const isTooNarrow = (e: HTMLElement) => e.scrollWidth < 400 // rule out sidebars
   candicates.forEach((candicate) => {
     if (isTooNarrow(candicate.elem)) {
@@ -110,6 +111,9 @@ export const extractArticle = function(): HTMLElement | undefined {
           parent.score *= 0.7
         }
       })
+    }
+    if (canScroll(candicate.elem) && candicate.elem !== document.body) {
+      candicate.score *= 0.5
     }
   })
 

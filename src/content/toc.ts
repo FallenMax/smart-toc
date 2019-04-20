@@ -143,7 +143,8 @@ function contentStream({
           const headingRect = h.dom.getBoundingClientRect()
           return {
             ...h,
-            fromArticleTop: headingRect.top - articleRect.top,
+            fromArticleTop:
+              headingRect.top - (articleRect.top - article.scrollTop),
           }
         })
         return {
