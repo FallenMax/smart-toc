@@ -2,15 +2,15 @@ export const createEventEmitter = <
   EventMap extends { [K: string]: any } = { [K: string]: any }
 >() => {
   type Keys = keyof EventMap
-  type KeysPayloadRequired = ({
+  type KeysPayloadRequired = {
     [K in Keys]: EventMap[K] extends undefined ? never : K
-  })[Keys]
+  }[Keys]
 
   type KeysPayloadOptional = Exclude<Keys, KeysPayloadRequired>
 
   type Handler<K extends keyof EventMap> = (payload: EventMap[K]) => void
 
-  let listeners = {} as { [K in Keys]: (Handler<K>)[] }
+  let listeners = {} as { [K in Keys]: Handler<K>[] }
 
   const on = <K extends Keys>(event: K, handler: Handler<K>) => {
     if (!listeners[event]) {
@@ -35,16 +35,16 @@ export const createEventEmitter = <
     event: K,
     payload: EventMap[K],
   ): void
-  function emit<K extends Keys>(event: K, payload: EventMap[K]): void {
+  function emit<K extends Keys>(event: K, payload?: EventMap[K]): void {
     if (listeners[event]) {
       listeners[event].forEach((handler) => {
-        handler(payload)
+        handler(payload!)
       })
     }
   }
 
   const removeAllListeners = () => {
-    listeners = {} as { [K in Keys]: (Handler<K>)[] }
+    listeners = {} as { [K in Keys]: Handler<K>[] }
   }
 
   return { on, off, emit, removeAllListeners }
