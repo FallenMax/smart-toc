@@ -5,7 +5,7 @@
 ## Download
 
 - Chrome extension: https://chrome.google.com/webstore/detail/smart-toc/lifgeihcfpkmmlfjbailfpfhbahhibba
-- Firefox addon: https://addons.mozilla.org/en-US/firefox/addon/smart_toc/ (under review, please come back later)
+- Firefox addon: https://addons.mozilla.org/en-US/firefox/addon/smart_toc/ 
 
 ## Build
 
