@@ -1,6 +1,11 @@
-# Smart TOC (Chrome extension)
+# Smart TOC (for Chrome/Firefox)
 
-> A table of contents for most webpages
+> webpage outliner
+
+## Download
+
+- Chrome extension: https://chrome.google.com/webstore/detail/smart-toc/lifgeihcfpkmmlfjbailfpfhbahhibba
+- Firefox addon: https://addons.mozilla.org/en-US/firefox/addon/smart_toc/ (under review, please come back later)
 
 ## Build
 

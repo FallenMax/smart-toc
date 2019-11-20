@@ -4,3 +4,5 @@ dist
 *.log
 *.zip
 .rpt2_cache
+/chrome
+/firefox

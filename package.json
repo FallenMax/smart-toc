@@ -4,12 +4,15 @@
   "description": "an chrome extension that generates a table of content for webpage",
   "main": "src/js/index.js",
   "scripts": {
-    "clean": "rm -rf dist/* smart-toc.zip",
-    "start": "export ENV=development && npm run build:background && rollup --config rollup.config.js --watch",
-    "build": "export ENV=production && npm run clean; npm run build:content && npm run build:background && npm run build:zip",
+    "clean": "rm -rf dist/* firefox/* chrome/*",
+    "start": "export ENV=development && yarn run build:background && rollup --config rollup.config.js --watch",
+    "build": "export ENV=production && yarn run clean; yarn run build:content && yarn run build:background && yarn run build:chrome && yarn run build:firefox",
     "build:content": "rollup --config rollup.config.js",
     "build:background": "mkdir -p dist && cp -R src/background/* dist/",
-    "build:zip": "zip -r smart-toc.zip dist"
+    "build:chrome": "mkdir -p chrome && zip -r chrome/smart-toc.zip dist",
+    "build:firefox": "yarn run build:firefox:package && yarn run build:firefox:source",
+    "build:firefox:package": "web-ext build --overwrite-dest --artifacts-dir ./firefox --source-dir  ./dist/ ",
+    "build:firefox:source": "zip -r ./firefox/smart-toc_source.zip src package.json README.md tsconfig.json rollup.config.js yarn.lock"
   },
   "repository": {
     "type": "git",
@@ -39,7 +42,8 @@
     "rollup-plugin-string": "^3.0.0",
     "rollup-plugin-typescript": "^1.0.1",
     "rollup-plugin-typescript2": "^0.25.2",
-    "typescript": "^3.7.2"
+    "typescript": "^3.7.2",
+    "web-ext": "^3.2.1"
   },
   "dependencies": {
     "mithril": "^2.0.4",
