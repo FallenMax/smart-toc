@@ -61,9 +61,11 @@
   opacity: 1;
 }
 
-#smarttoc .handle:hover,
+#smarttoc .handle:hover {
+  cursor: grab;
+}
 #smarttoc .handle:active {
-  cursor: move;
+  cursor: grabbing;
 }
 
 #smarttoc .handle:active {
