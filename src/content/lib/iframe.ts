@@ -5,13 +5,10 @@ const getIframes = (wnd: Window): HTMLIFrameElement[] => {
   } catch (error) {
     // ignore
   }
-  return iframes.reduce(
-    (prev, curIframe) => {
-      const curWindow = curIframe.contentWindow
-      return prev.concat(curWindow ? getIframes(curWindow) : [])
-    },
-    [] as HTMLIFrameElement[],
-  )
+  return iframes.reduce((prev, curIframe) => {
+    const curWindow = curIframe.contentWindow
+    return prev.concat(curIframe, curWindow ? getIframes(curWindow) : [])
+  }, [] as HTMLIFrameElement[])
 }
 
 export const getContentWindow = (): Window => {

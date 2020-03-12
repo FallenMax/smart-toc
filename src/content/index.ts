@@ -1,6 +1,6 @@
-import { createToc, Toc, TocPreference } from './toc'
-import { getContentWindow } from './lib/iframe'
 import { extractArticle, extractHeadings } from './lib/extract'
+import { getContentWindow } from './lib/iframe'
+import { createToc, Toc, TocPreference } from './toc'
 import { showToast } from './util/toast'
 
 if (window === getContentWindow()) {

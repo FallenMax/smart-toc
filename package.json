@@ -33,20 +33,20 @@
   },
   "homepage": "https://github.com/FallenMax/smart-toc#readme",
   "devDependencies": {
-    "@types/chrome": "^0.0.96",
+    "@types/chrome": "^0.0.99",
     "@types/mithril": "^2.0.2",
-    "rollup": "1.31.1",
+    "rollup": "2.0.4",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-replace": "2.2.0",
     "rollup-plugin-string": "^3.0.0",
     "rollup-plugin-typescript": "^1.0.1",
     "rollup-plugin-typescript2": "^0.26.0",
-    "typescript": "^3.8.2",
+    "typescript": "^3.8.3",
     "web-ext": "^4.1.0"
   },
   "dependencies": {
     "mithril": "^2.0.4",
-    "tslib": "^1.11.0"
+    "tslib": "^1.11.1"
   }
 }

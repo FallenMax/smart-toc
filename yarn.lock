@@ -69,10 +69,10 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@types/chrome@^0.0.96":
-  version "0.0.96"
-  resolved "https://registry.npm.taobao.org/@types/chrome/download/@types/chrome-0.0.96.tgz#afdd11564bffcb1623ea83a85ccff25f5a99b073"
-  integrity sha1-r90RVkv/yxYj6oOoXM/yX1qZsHM=
+"@types/chrome@^0.0.99":
+  version "0.0.99"
+  resolved "https://registry.npm.taobao.org/@types/chrome/download/@types/chrome-0.0.99.tgz#9453a5082a5291e78a0d24604b69796b16e9342c"
+  integrity sha1-lFOlCCpSkeeKDSRgS2l5axbpNCw=
   dependencies:
     "@types/filesystem" "*"
 
@@ -81,7 +81,7 @@
   resolved "https://registry.npm.taobao.org/@types/color-name/download/@types/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
   integrity sha1-HBJhu+qhCoBVu8XYq4S3sq/IRqA=
 
-"@types/estree@*", "@types/estree@0.0.39":
+"@types/estree@0.0.39":
   version "0.0.39"
   resolved "https://registry.npm.taobao.org/@types/estree/download/@types/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
   integrity sha1-4Xfmme4bjCLSMXTKqnQiZEOJUJ8=
@@ -1980,7 +1980,7 @@ fs.realpath@^1.0.0:
   resolved "https://registry.npm.taobao.org/fs.realpath/download/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
 
-fsevents@2.1.2:
+fsevents@2.1.2, fsevents@~2.1.2:
   version "2.1.2"
   resolved "https://registry.npm.taobao.org/fsevents/download/fsevents-2.1.2.tgz?cache=0&sync_timestamp=1580708699417&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ffsevents%2Fdownload%2Ffsevents-2.1.2.tgz#4c0a1fb34bc68e543b4b82a9ec392bfbda840805"
   integrity sha1-TAofs0vGjlQ7S4Kp7Dkr+9qECAU=
@@ -4031,14 +4031,12 @@ rollup-pluginutils@^2.4.1:
     estree-walker "^0.6.0"
     micromatch "^3.1.10"
 
-rollup@1.31.1:
-  version "1.31.1"
-  resolved "https://registry.npm.taobao.org/rollup/download/rollup-1.31.1.tgz#4170d6f87148d46e5fbe29b493f8f3ea3453c96f"
-  integrity sha1-QXDW+HFI1G5fvim0k/jz6jRTyW8=
-  dependencies:
-    "@types/estree" "*"
-    "@types/node" "*"
-    acorn "^7.1.0"
+rollup@2.0.4:
+  version "2.0.4"
+  resolved "https://registry.npm.taobao.org/rollup/download/rollup-2.0.4.tgz#23e7b20b4d653ad14db783630b4e44b69c1a0d97"
+  integrity sha1-I+eyC01lOtFNt4NjC05EtpwaDZc=
+  optionalDependencies:
+    fsevents "~2.1.2"
 
 run-async@^0.1.0:
   version "0.1.0"
@@ -4697,10 +4695,10 @@ tslib@1.10.0, tslib@^1.9.0:
   resolved "https://registry.npm.taobao.org/tslib/download/tslib-1.10.0.tgz#c3c19f95973fb0a62973fb09d90d961ee43e5c8a"
   integrity sha1-w8GflZc/sKYpc/sJ2Q2WHuQ+XIo=
 
-tslib@^1.11.0:
-  version "1.11.0"
-  resolved "https://registry.npm.taobao.org/tslib/download/tslib-1.11.0.tgz#f1f3528301621a53220d58373ae510ff747a66bc"
-  integrity sha1-8fNSgwFiGlMiDVg3OuUQ/3R6Zrw=
+tslib@^1.11.1:
+  version "1.11.1"
+  resolved "https://registry.npm.taobao.org/tslib/download/tslib-1.11.1.tgz#eb15d128827fbee2841549e171f45ed338ac7e35"
+  integrity sha1-6xXRKIJ/vuKEFUnhcfRe0zisfjU=
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
@@ -4753,10 +4751,10 @@ typedarray@^0.0.6:
   resolved "https://registry.npm.taobao.org/typedarray/download/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript@^3.8.2:
-  version "3.8.2"
-  resolved "https://registry.npm.taobao.org/typescript/download/typescript-3.8.2.tgz?cache=0&sync_timestamp=1582312132743&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftypescript%2Fdownload%2Ftypescript-3.8.2.tgz#91d6868aaead7da74f493c553aeff76c0c0b1d5a"
-  integrity sha1-kdaGiq6tfadPSTxVOu/3bAwLHVo=
+typescript@^3.8.3:
+  version "3.8.3"
+  resolved "https://registry.npm.taobao.org/typescript/download/typescript-3.8.3.tgz?cache=0&sync_timestamp=1583910799443&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftypescript%2Fdownload%2Ftypescript-3.8.3.tgz#409eb8544ea0335711205869ec458ab109ee1061"
+  integrity sha1-QJ64VE6gM1cRIFhp7EWKsQnuEGE=
 
 union-value@^1.0.0:
   version "1.0.0"
