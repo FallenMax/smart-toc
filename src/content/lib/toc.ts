@@ -18,11 +18,12 @@ export type TocOptions = {
    */
   gapFromTop?: number
   /**
-   * append an empty div after article to ensure we can scroll to last heading, even if last paragraph is not tall enough
+   * insert an empty div at the end of article
    *
-   * the div will be removed when toc is destroyed
+   * this is to ensure we can scroll to last heading, even if last paragraph is not tall enough,
+   * the placeholder will be removed when toc is destroyed
    */
-  appendExtender?: boolean
+  appendPlaceholder?: boolean
 }
 
 /**
@@ -47,8 +48,13 @@ export const createToc = (options: TocOptions) => {
     getArticle() {},
     getHeadings() {},
     getScroller() {},
+
+    goToNextHeading() {},
+    goToPreviousHeading() {},
     updateOptions(update: Partial<TocOptions>) {},
     render(dom: HTMLElement) {},
     destroy() {},
   }
 }
+
+export type Toc = ReturnType<typeof createToc>

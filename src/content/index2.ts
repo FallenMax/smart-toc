@@ -1,53 +1,50 @@
-import m from 'mithril'
-import {
-  detectMainWindow,
-  extractArticle,
-  extractHeadings,
-} from './lib/extract'
+import { detectMainWindow, extract } from './lib/extract'
+import { createTocPanel, TocPanel } from './lib/panel'
 import { showToast } from './lib/toast'
+import { createToc, Toc } from './lib/toc'
+import { getOrCreateContainer } from './util/dom/get_container'
+import { logger } from './util/logger'
+import { noop } from './util/noop'
 
 const mainWindow = detectMainWindow()
+const main = () => {
+  let toc: Toc | undefined
+  let panel: TocPanel | undefined
+  let destroy = noop
+  const start = () => {
+    const result = extract()
 
-const TocContainer: m.FactoryComponent<{ article: HTMLElement }> = (options: {
-  article
-}) => {
-  return {
-    view() {
+    if (!result?.headings.length) {
+      showToast('No article/headings are detected.')
       return
+    }
+
+    toc = createToc({ article: result.article })
+    panel = createTocPanel({
+      dom: getOrCreateContainer('smarttoc-container'),
+      toc,
+    })
+    return () => {
+      toc?.destroy()
+      panel?.destroy()
+    }
+  }
+  chrome.runtime.onMessage.addListener(
+    (request: 'toggle' | 'prev' | 'next', sender, sendResponse) => {
+      try {
+        if (!toc) {
+          destroy = start()
+        }
+
+        sendResponse(true)
+      } catch (e) {
+        logger.error(e)
+        sendResponse(false)
+      }
     },
-  }
-}
-
-const start = () => {
-  const article = extractArticle()
-  const headings = article && extractHeadings(article)
-  if (!headings?.length) {
-    showToast('No article/headings are detected.')
-    return
-  }
-
-  let containerSettings = {}
-
-  const tocContainer = document.createElement('smarttoc-container')
-  document.body.appendChild(tocContainer)
+  )
 }
 
 if (window === mainWindow) {
-  start()
-
-  // chrome.runtime.onMessage.addListener(
-  //   (request: 'toggle' | 'prev' | 'next', sender, sendResponse) => {
-  //     try {
-  //       if (!toc) {
-  //         start()
-  //       } else {
-  //         toc[request]()
-  //       }
-  //       sendResponse(true)
-  //     } catch (e) {
-  //       logger.error(e)
-  //       sendResponse(false)
-  //     }
-  //   },
-  // )
+  main()
 }
