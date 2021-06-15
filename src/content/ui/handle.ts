@@ -53,7 +53,7 @@ export const Handle: m.FactoryComponent<HandleAttrs> = (vnode) => {
       return m(
         '.handle',
         {
-          onmousedown(e) {
+          onmousedown(e: MouseEvent) {
             onDragStart(e, vnode)
           },
         },

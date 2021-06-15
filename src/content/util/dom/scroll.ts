@@ -1,5 +1,5 @@
-import { isDebugging } from '../util/env'
-import { draw } from '../util/debug'
+import { isDebugging } from '../env'
+import { highlight } from './highlight'
 
 export const getScrollTop = (elem: HTMLElement): number => {
   if (elem === document.body) {
@@ -30,7 +30,7 @@ export const getScrollElement = (elem: HTMLElement): HTMLElement => {
     elem = elem.parentElement!
   }
   if (isDebugging) {
-    draw(elem, 'purple')
+    highlight(elem, 'purple')
   }
   return elem
 }
@@ -46,17 +46,17 @@ const easeOutQuad = (
 export const smoothScroll = ({
   target,
   scroller,
-  topMargin = 0,
+  topMargin,
   maxDuration = 300,
-  callback,
+  onFinish,
 }: {
   target: HTMLElement
   scroller: HTMLElement
+  topMargin: number
   maxDuration?: number
-  topMargin?: number
-  callback?(): void
+  onFinish?(): void
 }) => {
-  const ease = easeOutQuad
+  const easingFunc = easeOutQuad
   const targetTop = target.getBoundingClientRect().top
   const containerTop =
     scroller === document.body ? 0 : scroller.getBoundingClientRect().top
@@ -73,28 +73,30 @@ export const smoothScroll = ({
 
   if (maxDuration === 0) {
     setScrollTop(scroller, scrollEnd)
-    if (callback) {
-      callback()
+    if (onFinish) {
+      onFinish()
     }
     return
   }
 
   let startTime: number
-  function update(timestamp: number) {
-    if (!startTime) {
+
+  const update = (timestamp: number) => {
+    if (startTime == null) {
       startTime = timestamp
     }
     const progress = (timestamp - startTime) / duration
     if (progress < 1) {
-      const scrollPos = ease(progress, scrollStart, distance)
+      const scrollPos = easingFunc(progress, scrollStart, distance)
       setScrollTop(scroller, scrollPos)
       window.requestAnimationFrame(update)
     } else {
       setScrollTop(scroller, scrollEnd)
-      if (callback) {
-        callback()
+      if (onFinish) {
+        onFinish()
       }
     }
   }
+
   window.requestAnimationFrame(update)
 }

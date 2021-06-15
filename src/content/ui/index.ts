@@ -1,15 +1,15 @@
 import m from 'mithril'
-import tocCSS from '../style/toc.css'
+import { Article, Heading, Offset, Scroller } from '../types'
 import { addCSS } from '../util/dom/css'
 import { Stream } from '../util/stream'
-import { Offset, Heading, Article, Scroller } from '../types'
 import { Handle } from './handle'
+import tocCSS from './toc.css'
 import { TocContent } from './toc_content'
 
 const ROOT_ID = 'smarttoc-wrapper'
-const CSS_ID = 'smarttoc__css'
+const CSS_ID = 'smarttoc-css'
 
-const calcPlacement = function(article: Article): 'left' | 'right' {
+const calcPlacement = function (article: Article): 'left' | 'right' {
   const { left, right } = article
   const winWidth = window.innerWidth
   const panelMinWidth = 250
@@ -21,7 +21,7 @@ const calcPlacement = function(article: Article): 'left' | 'right' {
     : 'right'
 }
 
-const calcStyle = function(options: {
+const calcStyle = function (options: {
   article: Article
   scroller: Scroller
   offset: Offset

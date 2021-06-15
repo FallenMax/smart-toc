@@ -1,10 +1,10 @@
-import { Stream } from './util/stream'
-import { createEventEmitter } from './util/event'
-import { getScrollElement, smoothScroll, getScrollTop } from './lib/scroll'
 import { extractHeadings } from './lib/extract'
-import { ui } from './ui/index'
-import { Article, Scroller, Content, Heading } from './types'
 import { enterReadableMode, leaveReadableMode } from './lib/readable'
+import { Article, Content, Heading, Scroller } from './types'
+import { ui } from './ui/index'
+import { getScrollElement, getScrollTop, smoothScroll } from './util/dom/scroll'
+import { createEventEmitter } from './util/event'
+import { Stream } from './util/stream'
 
 export interface TocPreference {
   offset: {
@@ -123,49 +123,47 @@ function contentStream({
     $periodicCheck,
   ])
     .filter(() => $isShown())
-    .map(
-      (): Content => {
-        const articleRect = article.getBoundingClientRect()
-        const scrollerRect =
-          scroller === document.body || scroller === document.documentElement
-            ? {
-                left: 0,
-                right: window.innerWidth,
-                top: 0,
-                bottom: window.innerHeight,
-                height: window.innerHeight,
-                width: window.innerWidth,
-              }
-            : scroller.getBoundingClientRect()
-        const headings = extractHeadings(article)
-        const scrollY = getScrollTop(scroller)
-        const headingsMeasured = headings.map((h) => {
-          const headingRect = h.dom.getBoundingClientRect()
-          return {
-            ...h,
-            fromArticleTop:
-              headingRect.top - (articleRect.top - article.scrollTop),
-          }
-        })
+    .map((): Content => {
+      const articleRect = article.getBoundingClientRect()
+      const scrollerRect =
+        scroller === document.body || scroller === document.documentElement
+          ? {
+              left: 0,
+              right: window.innerWidth,
+              top: 0,
+              bottom: window.innerHeight,
+              height: window.innerHeight,
+              width: window.innerWidth,
+            }
+          : scroller.getBoundingClientRect()
+      const headings = extractHeadings(article)
+      const scrollY = getScrollTop(scroller)
+      const headingsMeasured = headings.map((h) => {
+        const headingRect = h.dom.getBoundingClientRect()
         return {
-          article: {
-            dom: article,
-            fromScrollerTop:
-              article === scroller
-                ? 0
-                : articleRect.top - scrollerRect.top + scrollY,
-            left: articleRect.left,
-            right: articleRect.right,
-            height: articleRect.height,
-          },
-          scroller: {
-            dom: scroller,
-            rect: scrollerRect,
-          },
-          headings: headingsMeasured,
+          ...h,
+          fromArticleTop:
+            headingRect.top - (articleRect.top - article.scrollTop),
         }
-      },
-    )
+      })
+      return {
+        article: {
+          dom: article,
+          fromScrollerTop:
+            article === scroller
+              ? 0
+              : articleRect.top - scrollerRect.top + scrollY,
+          left: articleRect.left,
+          right: articleRect.right,
+          height: articleRect.height,
+        },
+        scroller: {
+          dom: scroller,
+          rect: scrollerRect,
+        },
+        headings: headingsMeasured,
+      }
+    })
 
   return $content
 }
@@ -279,7 +277,7 @@ export function createToc(options: {
           target: heading.dom,
           scroller: scroller.dom,
           topMargin: topbarHeight || 0 + 10,
-          callback() {
+          onFinish() {
             $triggerTopbarMeasure(heading.dom)
             resolve()
           },

@@ -1,17 +1,16 @@
-export type Point = [number, number]
-
-export const depthOf = function(elem: HTMLElement | null): number | undefined {
-  if (!elem) return undefined
-
-  let depth = 0
+export const depthOfElement = (elem: HTMLElement): number => {
+  let depth = 1
   while (elem) {
+    if (!elem.parentElement) {
+      return depth
+    }
     elem = elem.parentElement
     depth++
   }
   return depth
 }
 
-export const depthOfPoint = function([x, y]: Point): number | undefined {
-  const elem = document.elementFromPoint(x, y)
-  return elem ? depthOf(elem as HTMLElement) : undefined
+export const depthOfPoint = ([x, y]: [number, number]): number => {
+  const elem = document.elementFromPoint(x, y) as HTMLElement
+  return elem ? depthOfElement(elem) : 0
 }

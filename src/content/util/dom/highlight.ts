@@ -1,7 +1,7 @@
-export function draw(
+export const highlight = (
   elem: HTMLElement | HTMLElement[] | null | undefined,
   color = 'red',
-): void {
+) => {
   if (elem) {
     if (Array.isArray(elem)) {
       elem.forEach((el) => {

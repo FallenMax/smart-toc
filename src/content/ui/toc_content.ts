@@ -1,7 +1,7 @@
 import m from 'mithril'
-import { Heading, Article } from '../types'
-import { smoothScroll } from '../lib/scroll'
-import { toArray } from '../util/dom/to_array'
+import { Article, Heading } from '../types'
+import { fromArrayLike } from '../util/arraylike'
+import { smoothScroll } from '../util/dom/scroll'
 
 type MithrilEvent = {
   redraw: boolean
@@ -52,7 +52,7 @@ const toTree = (headings: Heading[], activeHeading: number): HeadingNode => {
   return tree
 }
 
-const restrictScroll = function(e: WheelEvent & MithrilEvent) {
+const restrictScroll = function (e: WheelEvent & MithrilEvent) {
   const toc = e.currentTarget as HTMLElement
   const maxScroll = toc.scrollHeight - toc.offsetHeight
   if (toc.scrollTop + e.deltaY < 0) {
@@ -98,7 +98,9 @@ export const TocContent: m.FactoryComponent<{
       if (isScrollingToHeading) {
         return
       }
-      const activeHeadings = toArray(vnode.dom.querySelectorAll('.active'))
+      const activeHeadings = fromArrayLike(
+        vnode.dom.querySelectorAll('.active'),
+      )
       const activeHeading = activeHeadings[activeHeadings.length - 1] // could have several '.active' headings (for multiple levels)
       if (activeHeading) {
         revealActiveHeading(
@@ -111,8 +113,11 @@ export const TocContent: m.FactoryComponent<{
       const { headings, activeHeading, onScrollToHeading } = vnode.attrs
       const tree = toTree(headings, activeHeading)
 
-      const HeadingList = (nodes: HeadingNode[], { isRoot = false } = {}) =>
-        m(
+      const HeadingList = (
+        nodes: HeadingNode[],
+        { isRoot = false } = {},
+      ): m.Vnode => {
+        return m(
           'ul',
           {
             onwheel: isRoot && restrictScroll,
@@ -131,12 +136,13 @@ export const TocContent: m.FactoryComponent<{
           },
           nodes.map(HeadingItem),
         )
+      }
 
       const HeadingItem = (
         { heading, children, isActive }: HeadingNode,
         index: number,
-      ) =>
-        m(
+      ): m.Vnode => {
+        return m(
           'li',
           { class: isActive ? 'active' : '', key: index },
           [
@@ -152,6 +158,7 @@ export const TocContent: m.FactoryComponent<{
             children && children.length && HeadingList(children),
           ].filter(Boolean),
         )
+      }
 
       return HeadingList(tree.children, { isRoot: true })
     },

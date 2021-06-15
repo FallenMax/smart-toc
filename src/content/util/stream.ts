@@ -1,5 +1,4 @@
 import { isDebugging } from './env'
-import { createLogger } from './logger'
 
 /** valid values */
 type VV = number | boolean | string | null | object
@@ -38,7 +37,7 @@ class StreamClass<T extends VV> {
   }
 
   static create<T extends VV>(init?: T | undefined, name?: string): Stream<T> {
-    const stream$ = function(val?: T) {
+    const stream$ = function (val?: T) {
       if (arguments.length === 0) {
         return stream$.value
       } else {
@@ -77,7 +76,7 @@ class StreamClass<T extends VV> {
     T2 extends VV,
     T3 extends VV,
     T4 extends VV,
-    T5 extends VV
+    T5 extends VV,
   >(
     streams: [Stream<T1>, Stream<T2>, Stream<T3>, Stream<T4>, Stream<T5>],
   ): Stream<[T1, T2, T3, T4, T5]>
@@ -122,7 +121,7 @@ class StreamClass<T extends VV> {
     B extends VV,
     C extends VV,
     D extends VV,
-    E extends VV
+    E extends VV,
   >(
     streams: [Stream<A>, Stream<B>, Stream<C>, Stream<D>, Stream<E>],
   ): Stream<A | B | C | D | E>
@@ -196,7 +195,7 @@ class StreamClass<T extends VV> {
 
   startsWith<S extends VV>(value: S): Stream<S | T> {
     const start$ = Stream(value)
-    return Stream.merge([start$, (this as any) as Stream<T>])
+    return Stream.merge([start$, this as any as Stream<T>])
   }
 
   subscribe(listener: StreamListener<T>, emitCurrent = true): () => void {
@@ -297,7 +296,7 @@ class StreamClass<T extends VV> {
     let timer: number
     this.subscribe((val) => {
       clearTimeout(timer)
-      timer = window.setTimeout(function() {
+      timer = window.setTimeout(function () {
         debounced$(val)
       }, delay)
     })
@@ -332,10 +331,6 @@ class StreamClass<T extends VV> {
 
   log(name: string): this {
     this.displayName = name
-    if (isDebugging) {
-      const logger = createLogger('$' + name)
-      this.subscribe(logger)
-    }
     return this
   }
 

@@ -1,1 +1,1 @@
-export const isDebugging = /dev/.test(process.env.ENV || '')
+export const isDebugging = location.search.includes('smarttoc-debug=1')

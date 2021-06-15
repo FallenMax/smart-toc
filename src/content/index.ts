@@ -1,9 +1,15 @@
-import { extractArticle, extractHeadings } from './lib/extract'
-import { getContentWindow } from './lib/iframe'
+import {
+  detectMainWindow,
+  extractArticle,
+  extractHeadings,
+} from './lib/extract'
+import { showToast } from './lib/toast'
 import { createToc, Toc, TocPreference } from './toc'
-import { showToast } from './util/toast'
+import { logger } from './util/logger'
 
-if (window === getContentWindow()) {
+const mainWindow = detectMainWindow()
+
+if (window === mainWindow) {
   let preference: TocPreference = {
     offset: { x: 0, y: 0 },
   }
@@ -44,7 +50,7 @@ if (window === getContentWindow()) {
         }
         sendResponse(true)
       } catch (e) {
-        console.error(e)
+        logger.error(e)
         sendResponse(false)
       }
     },

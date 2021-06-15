@@ -1,5 +1,5 @@
 export const createEventEmitter = <
-  EventMap extends { [K: string]: any } = { [K: string]: any }
+  EventMap extends { [K: string]: any } = { [K: string]: any },
 >() => {
   type Keys = keyof EventMap
   type KeysPayloadRequired = {

@@ -9,6 +9,8 @@ export type Rect = {
 
 export interface Article {
   dom: HTMLElement
+
+  // inaccurate properties
   fromScrollerTop: number
   left: number
   right: number

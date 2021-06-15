@@ -1,107 +1,76 @@
-import { num, px } from '../util/dom/px'
+import { Content } from '../types'
+import { fromPx, setStyle, toPx } from '../util/dom/css'
+import { logger } from '../util/logger'
 import { between } from '../util/math/between'
-import { applyStyle } from '../util/dom/css'
-import { Content, Heading } from '../types'
-import { isDebugging } from '../util/env'
-import { toArray } from '../util/dom/to_array'
-
-//-------------- container extender  --------------
+import { noop } from '../util/noop'
 
 const EXTENDER_ID = 'smarttoc-extender'
-const appendExtender = (content: Content, topbarHeight: number): void => {
+const addExtender = (content: Content, topbarHeight: number) => {
   const { article, scroller, headings } = content
   let extender: HTMLElement | null = scroller.dom.querySelector(
     '#' + EXTENDER_ID,
   )
-  const extenderHeight = extender ? (extender as HTMLElement).offsetHeight : 0
   if (!extender) {
     extender = document.createElement('div')
     extender.id = EXTENDER_ID
     scroller.dom.appendChild(extender)
   }
+  const extenderHeight = extender.offsetHeight
 
-  const visibleAreaBottom = Math.max(topbarHeight, scroller.rect.top)
-
-  const getBottomHeading = (headings: Heading[]): Heading | undefined => {
-    const [first, ...rest] = headings
-    return (
-      first &&
-      rest.reduce(
-        (lowest, cur) =>
-          cur.fromArticleTop! > lowest.fromArticleTop! ? cur : lowest,
-        first,
-      )
-    )
-  }
-  const bottomHeading = getBottomHeading(headings)
+  const bottomHeading = headings.sort(
+    (a, b) => b.fromArticleTop! - a.fromArticleTop!,
+  )[0]
   if (!bottomHeading) {
-    return
+    return noop
   }
 
-  //  the top of last heading, when scrolled to bottom of scroller
-  const bottomHeadingTop =
-    scroller.rect.bottom -
-    (scroller.dom.scrollHeight - extenderHeight) +
-    article.fromScrollerTop +
-    bottomHeading.fromArticleTop!
-
-  const additionalVerticalSpaceNeeded = Math.max(
+  /**
+   * @see ../../../doc/illustration.svg
+   */
+  const requiredExtenderHeight = Math.max(
     0,
-    bottomHeadingTop - visibleAreaBottom,
+    scroller.rect.bottom -
+      (scroller.dom.scrollHeight - extenderHeight) +
+      article.fromScrollerTop +
+      bottomHeading.fromArticleTop! -
+      Math.max(topbarHeight, scroller.rect.top),
   )
 
-  extender.style.height = additionalVerticalSpaceNeeded + 'px'
-  if (isDebugging) {
-    console.log('[extender] height: ', additionalVerticalSpaceNeeded)
-  }
-}
-const removeExtender = (): void => {
-  const extender = document.getElementById(EXTENDER_ID)
-  if (extender) {
-    extender.remove()
+  extender.style.height = requiredExtenderHeight + 'px'
+
+  logger.info('[extender] height: ', requiredExtenderHeight)
+  return () => {
+    extender?.remove()
   }
 }
 
-//-------------- apply readable style --------------
-
-const DATASET_ARTICLE = 'smarttocArticle'
-const DATASET_ARTICLE__CAMELCASE = 'smarttoc-article'
-const DATASET_ORIGIN_STYLE = 'smarttocOriginStyle'
-
-const applyReadableStyle = (article: HTMLElement): void => {
-  article.dataset[DATASET_ARTICLE] = '1'
-  article.dataset[DATASET_ORIGIN_STYLE] = article.style.cssText
-
+const addReadableStyle = (article: HTMLElement) => {
   const computed = window.getComputedStyle(article)
-  if (!computed) throw new Error('article should be element')
   const rect = article.getBoundingClientRect()
 
-  let bestWidth = between(12, num(computed.fontSize!), 16) * 66
-  if (computed['box-sizing'] === 'border-box') {
-    bestWidth += num(computed['padding-left']) + num(computed['padding-right'])
+  let bestWidth = between(12, fromPx(computed.fontSize), 16) * 66
+  if (computed.boxSizing === 'border-box') {
+    bestWidth += fromPx(computed.paddingLeft) + fromPx(computed.paddingRight)
   }
 
-  let readableStyle = {} as CSSStyleDeclaration
+  let readableStyle: Partial<CSSStyleDeclaration> = {}
   if (bestWidth < rect.width) {
-    readableStyle.maxWidth = px(bestWidth)
-    if (!(num(computed.marginLeft!) || num(computed.marginRight!))) {
+    readableStyle.maxWidth = toPx(bestWidth)
+    if (!(fromPx(computed.marginLeft) || fromPx(computed.marginRight))) {
       readableStyle.marginLeft = 'auto'
       readableStyle.marginRight = 'auto'
     }
   }
-  applyStyle(article, readableStyle)
+
+  const oldStyle = article.style.cssText
+  setStyle(article, readableStyle)
+  return () => {
+    setStyle(article, oldStyle)
+  }
 }
 
-const removeReadableStyle = (): void => {
-  const articles = toArray(
-    document.querySelectorAll(`[data-${DATASET_ARTICLE__CAMELCASE}]`),
-  ) as HTMLElement[]
-  articles.forEach((article) => {
-    applyStyle(article, article.dataset[DATASET_ORIGIN_STYLE])
-    delete article.dataset[DATASET_ARTICLE]
-    delete article.dataset[DATASET_ORIGIN_STYLE]
-  })
-}
+let removeReadableStyle = noop
+let removeExtender = noop
 
 export const enterReadableMode = (
   content: Content,
@@ -109,17 +78,13 @@ export const enterReadableMode = (
 ): void => {
   leaveReadableMode()
 
-  if (isDebugging) {
-    console.log('[readable mode] enter')
-  }
-  applyReadableStyle(content.article.dom)
-  appendExtender(content, topbarHeight)
+  removeReadableStyle = addReadableStyle(content.article.dom)
+
+  // TODO addReadableStyle() changes layout of article, could require updating heading.fromArticleTop
+  removeExtender = addExtender(content, topbarHeight)
 }
 
-export const leaveReadableMode = (): void => {
-  if (isDebugging) {
-    console.log('[readable mode] leave')
-  }
+export const leaveReadableMode = () => {
   removeReadableStyle()
   removeExtender()
 }
