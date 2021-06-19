@@ -31,8 +31,8 @@ const main = () => {
       panel?.destroy()
     }
 
-    toc.on('articleChanged', ({ article, headings }) => {
-      if (!article || !headings.length) {
+    toc.on('headingsChanged', (headings) => {
+      if (!headings?.length) {
         showToast('No article/headings are detected.')
         stop()
       }

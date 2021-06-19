@@ -7,28 +7,14 @@ export type Rect = {
   width: number
 }
 
-export interface Article {
-  dom: HTMLElement
+export type Article = HTMLElement
 
-  // inaccurate properties
-  fromScrollerTop: number
-  left: number
-  right: number
-  height: number
-}
+export type Scroller = HTMLElement
 
-export interface Scroller {
-  dom: HTMLElement
-  rect: Rect
-}
-
-export interface Heading {
+export type Heading = {
   dom: HTMLElement
   level: number
   text: string
-  id: number
-  anchor?: string
-  fromArticleTop?: number
 }
 
 export interface Content {
@@ -37,12 +23,9 @@ export interface Content {
   headings: Heading[]
 }
 
-export enum Theme {
-  Light = 'light',
-  Dark = 'dark',
-}
-
 export interface Offset {
   x: number
   y: number
 }
+
+export type Disposer = () => void

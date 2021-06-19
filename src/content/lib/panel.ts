@@ -6,7 +6,7 @@ let offset = {
 }
 
 /**
- * draggable container, with default position
+ * floating toc panel
  *
  * - draggable
  * - remembers position between show/hide

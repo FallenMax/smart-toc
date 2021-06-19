@@ -19,6 +19,8 @@ export const createEventEmitter = <
     if (!listeners[event].includes(handler)) {
       listeners[event].push(handler)
     }
+
+    return () => off(event, handler)
   }
 
   const off = <K extends Keys>(event: K, handler: Handler<K>) => {
