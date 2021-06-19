@@ -2,7 +2,7 @@ import { detectMainWindow, extract } from './lib/extract'
 import { createTocPanel, TocPanel } from './lib/panel'
 import { showToast } from './lib/toast'
 import { createToc, Toc } from './lib/toc'
-import { getOrCreateContainer } from './util/dom/get_container'
+import { getContainer } from './util/dom/get_container'
 import { logger } from './util/logger'
 import { noop } from './util/noop'
 
@@ -10,7 +10,9 @@ const mainWindow = detectMainWindow()
 const main = () => {
   let toc: Toc | undefined
   let panel: TocPanel | undefined
-  let destroy = noop
+
+  const isRunning = () => toc != null
+  let stop = noop
   const start = () => {
     const result = extract()
 
@@ -21,19 +23,53 @@ const main = () => {
 
     toc = createToc({ article: result.article })
     panel = createTocPanel({
-      dom: getOrCreateContainer('smarttoc-container'),
+      dom: getContainer('smarttoc-container'),
       toc,
     })
-    return () => {
+    stop = () => {
       toc?.destroy()
       panel?.destroy()
     }
+
+    toc.on('articleChanged', ({ article, headings }) => {
+      if (!article || !headings.length) {
+        showToast('No article/headings are detected.')
+        stop()
+      }
+    })
   }
+
   chrome.runtime.onMessage.addListener(
     (request: 'toggle' | 'prev' | 'next', sender, sendResponse) => {
       try {
-        if (!toc) {
-          destroy = start()
+        switch (request) {
+          case 'toggle': {
+            if (isRunning()) {
+              stop()
+            } else {
+              start()
+            }
+            break
+          }
+          case 'prev':
+          case 'next': {
+            if (!isRunning()) {
+              start()
+            } else {
+              if (request === 'next') {
+                toc!.goToNextHeading()
+              }
+              if (request === 'prev') {
+                toc!.goToPreviousHeading()
+              }
+              console.warn('unknown request', request)
+            }
+            break
+          }
+
+          default:
+            console.warn('unknown request', request)
+            break
         }
 
         sendResponse(true)

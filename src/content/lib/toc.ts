@@ -1,3 +1,6 @@
+import { Article, Heading } from '../types'
+import { createEventEmitter } from '../util/event'
+
 export type TocOptions = {
   /**
    * dom element or element id, where to render TOC
@@ -26,6 +29,11 @@ export type TocOptions = {
   appendPlaceholder?: boolean
 }
 
+export type TocEvent = {
+  articleChanged: { article: Article; headings: Heading[] }
+  activeHeadingChanged: number
+}
+
 /**
  * - detect article if not provided
  * - detect headings
@@ -38,13 +46,8 @@ export type TocOptions = {
  *   - article/heading/scroller change
  */
 export const createToc = (options: TocOptions) => {
-  type TocEvents = {
-    articleChanged: undefined
-    articleLayoutChanged: undefined
-    activeHeadingChanged: undefined
-  }
-
-  return {
+  const instance = {
+    ...createEventEmitter<TocEvent>(),
     getArticle() {},
     getHeadings() {},
     getScroller() {},
@@ -55,6 +58,7 @@ export const createToc = (options: TocOptions) => {
     render(dom: HTMLElement) {},
     destroy() {},
   }
+  return instance
 }
 
 export type Toc = ReturnType<typeof createToc>

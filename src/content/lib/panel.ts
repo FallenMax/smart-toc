@@ -1,4 +1,3 @@
-import m from 'mithril'
 import { Toc } from './toc'
 
 let offset = {
@@ -8,18 +7,12 @@ let offset = {
 
 /**
  * draggable container, with default position
+ *
+ * - draggable
+ * - remembers position between show/hide
+ * - scroll to active heading if out of view
+ * - auto-pick where to place panel
  */
-export const TocPanel: m.FactoryComponent<{
-  article: HTMLElement
-  onDispose(): void
-}> = () => {
-  return {
-    oninit(vnode) {},
-    view() {
-      return
-    },
-  }
-}
 
 export const createTocPanel = (options: { dom: HTMLElement; toc: Toc }) => {
   return {
