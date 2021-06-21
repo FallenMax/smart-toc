@@ -1,15 +1,10 @@
-import { Article, Heading, Scroller } from '../types'
+import { Article, Content, Heading } from '../types'
+import '../ui/toc.css'
 import { getScrollElement } from '../util/dom/scroll'
 import { createEventEmitter } from '../util/event'
 import { extractHeadings } from './extract'
 
 export type TocOptions = {
-  /**
-   * dom element or element id, where to render TOC
-   *
-   * if not present, you can use toc.render(dom) to render later
-   */
-  dom?: HTMLElement
   /**
    * article element or elment id
    *
@@ -34,8 +29,7 @@ export type TocOptions = {
 }
 
 export type TocEvent = {
-  articleChanged: undefined | Article
-  headingsChanged: undefined | Heading[]
+  contentChanged: undefined | Content
   activeHeadingChanged: number
 }
 
@@ -63,6 +57,11 @@ const areHeadingsEqual = (
   }
 }
 
+type HeadingNode = {
+  heading?: Heading | undefined
+  children?: HeadingNode[]
+}
+
 /**
  * - detect article if not provided
  * - detect headings
@@ -75,67 +74,81 @@ const areHeadingsEqual = (
  *   - article/heading/scroller change
  */
 export const createToc = (options: TocOptions) => {
-  let article: Article | undefined
-  let scroller: Scroller | undefined
-  let headings: Heading[] | undefined
+  let isDestroyed = false
+  let content: Content | undefined
+  let metrics
+  let dom: HTMLElement | undefined
+  let headingTree: HeadingNode | undefined
 
-  const setArticle = (art: Article | undefined) => {
-    if (art === article) {
-      return
+  const updateContent = (article: Article | undefined) => {
+    if (article) {
+      const headings = extractHeadings(article)
+      const scroller = getScrollElement(article)
+      if (headings && scroller) {
+        content = { article, headings, scroller }
+        instance.emit('contentChanged', content)
+        return
+      }
     }
 
-    article = art
-    instance.emit('articleChanged', art)
-
-    setHeadings(article && extractHeadings(article))
-    setScroller(article && getScrollElement(article))
-
-    // TODO
+    content = undefined
+    instance.emit('contentChanged', content)
   }
 
-  const setHeadings = (hds: Heading[] | undefined) => {
-    if (areHeadingsEqual(hds, headings)) {
+  const updateMetrics = () => {
+    if (!content) {
+      metrics = undefined
       return
     }
-
-    headings = hds
-    instance.emit('headingsChanged', headings)
-
-    // TODO
+    metrics = {
+      articleRect: content.article.getBoundingClientRect(),
+      scrollerRect: content.scroller.getBoundingClientRect(),
+      headingRects: content.headings.map((h) => h.dom.getBoundingClientRect()),
+    }
   }
 
-  const setScroller = (scr: Scroller | undefined) => {
-    if (scr === scroller) {
+  const render = () => {
+    if (!dom) {
       return
     }
 
-    scroller = scr
-    // TODO rebind events
+    const fragment = new DocumentFragment()
+
+    content?.headings
+
+    dom.innerHTML = ''
+    dom.appendChild(fragment)
+    // console.log('render', { content, dom, metrics })
   }
 
   const instance = {
     ...createEventEmitter<TocEvent>(),
     initialize() {
-      setArticle(getElement(options.article))
-      if (options.dom) {
-        instance.render(options.dom)
-      }
+      updateContent(getElement(options.article))
+      updateMetrics()
+      render()
     },
-    getArticle() {
-      return article
+    getContent() {
+      return content
     },
-    getHeadings() {
-      return headings
-    },
-    getScroller() {},
 
     goToNextHeading() {},
     goToPreviousHeading() {},
     updateOptions(update: Partial<TocOptions>) {},
-    render(dom: HTMLElement) {
-      console.log('render', dom)
+    render(d: HTMLElement) {
+      dom = d
+      render()
     },
     destroy() {
+      if (isDestroyed) {
+        return
+      }
+
+      isDestroyed = true
+      content = undefined
+      // TODO dom
+      metrics = undefined
+      headingTree = undefined
       instance.removeAllListeners()
     },
   }

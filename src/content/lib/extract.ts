@@ -1,7 +1,7 @@
-import { Heading } from '../types'
+import { Content, Heading, HeadingNode } from '../types'
 import { fromArrayLike } from '../util/arraylike'
 import { highlight } from '../util/dom/highlight'
-import { canScroll } from '../util/dom/scroll'
+import { canScroll, getScrollElement } from '../util/dom/scroll'
 import { isDebugging } from '../util/env'
 import { logger } from '../util/logger'
 import { between } from '../util/math/between'
@@ -242,6 +242,53 @@ const isElemVisible = (elem: HTMLElement) => {
   return true
 }
 
+export const toTree = (headings: Heading[]) => {
+  const tree: HeadingNode = {}
+  const stack = [tree]
+
+  const goUp = () => {
+    stack.pop()
+    console.log('up', stack, tree)
+  }
+  const goDown = () => {
+    const stackTop = stack[stack.length - 1]
+    if (!stackTop.children) {
+      stackTop.children = []
+    }
+    if (!stackTop.children.length) {
+      stackTop.children.push({})
+    }
+    stack.push(stackTop.children[stackTop.children.length - 1])
+    console.log('down', stack, tree)
+  }
+  const appendHeading = (heading?: Heading) => {
+    const stackTop = stack[stack.length - 1]
+    if (!stackTop.children) {
+      stackTop.children = []
+    }
+    stackTop.children.push({
+      heading,
+    })
+    console.log('append', stack, tree)
+  }
+
+  headings.forEach((heading, i) => {
+    const { level } = heading
+
+    while (stack.length > level + 1) {
+      goUp()
+    }
+    while (stack.length < level + 1) {
+      goDown()
+    }
+    if (stack.length === level + 1) {
+      appendHeading(heading)
+    }
+  })
+
+  return tree
+}
+
 export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
   const headingTagGroups: HeadingGroup[] = Object.keys(WEIGHT_BY_TAG)
     .map((tag) => {
@@ -287,6 +334,7 @@ export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
 
   // sort heading nodes using document sequence
   const headings: Heading[] = []
+
   {
     const walker = document.createTreeWalker(
       articleDom,
@@ -300,18 +348,15 @@ export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
       },
     )
 
-    let id = 0
+    let index = 0
     while (walker.nextNode()) {
       const dom = walker.currentNode as HTMLElement
-      const anchor = getElemAnchor(dom)
-      headings.push({
-        dom,
-        text: dom.textContent || '',
-        level: headingTags.indexOf(dom.tagName) + 1,
-        id,
-        anchor,
-      })
-      id++
+      const level = headingTags.indexOf(dom.tagName)
+      const text = dom.textContent || ''
+      const heading = { dom, level, text, index }
+      headings.push(heading)
+
+      index++
     }
   }
   if (isDebugging) {
@@ -320,23 +365,26 @@ export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
     })
     logger.info('[extract] extractHeadings', {
       headingTagGroups,
-      headings,
+      headings: headings,
     })
     logger.table(headings)
   }
+
   return headings
 }
 
-export const extract = () => {
+export const extractContent = (): Content | undefined => {
   const article = extractArticle()
   if (!article) {
     return undefined
   }
   const headings = extractHeadings(article)
-  if (!headings) {
+  if (!headings || !headings.length) {
     return undefined
   }
-  return { article, headings }
+  const scroller = getScrollElement(article)
+
+  return { article, headings, scroller }
 }
 
 const getIframesRecursive = (win: Window | null): HTMLIFrameElement[] => {

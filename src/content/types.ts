@@ -12,9 +12,15 @@ export type Article = HTMLElement
 export type Scroller = HTMLElement
 
 export type Heading = {
+  index: number
   dom: HTMLElement
   level: number
   text: string
+}
+
+export type HeadingNode = {
+  heading?: Heading | undefined
+  children?: HeadingNode[]
 }
 
 export interface Content {

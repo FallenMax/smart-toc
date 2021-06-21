@@ -1,53 +1,81 @@
-import {
-  detectMainWindow,
-  extractArticle,
-  extractHeadings,
-} from './lib/extract'
+import { detectMainWindow, extractContent } from './lib/extract'
+import { createTocPanel, TocPanel } from './lib/panel'
 import { showToast } from './lib/toast'
-import { createToc, Toc, TocPreference } from './toc'
+import { createToc, Toc } from './lib/toc'
+import { getContainer } from './util/dom/get_container'
 import { logger } from './util/logger'
+import { noop } from './util/noop'
 
 const mainWindow = detectMainWindow()
-
-if (window === mainWindow) {
-  let preference: TocPreference = {
-    offset: { x: 0, y: 0 },
-  }
+const main = () => {
   let toc: Toc | undefined
+  let panel: TocPanel | undefined
 
-  const start = (): void => {
-    const article = extractArticle()
-    const headings = article && extractHeadings(article)
-    if (!(article && headings && headings.length)) {
+  const isRunning = () => toc != null
+
+  let stop = noop
+  const start = () => {
+    const content = extractContent()
+
+    if (!content) {
       showToast('No article/headings are detected.')
       return
     }
-    if (toc) {
-      toc.dispose()
+
+    toc = createToc({ article: content.article })
+    panel = createTocPanel({
+      toc,
+    })
+    panel.render(getContainer('smarttoc-container'))
+
+    stop = () => {
+      toc?.destroy()
+      panel?.destroy()
     }
-    toc = createToc({
-      article,
-      preference,
-    })
-    toc.on('error', (error) => {
-      if (toc) {
-        toc.dispose()
-        toc = undefined
+
+    toc.on('contentChanged', (content) => {
+      if (!content) {
+        showToast('No article/headings are detected.')
+        stop()
       }
-      // re-extract && restart
-      start()
     })
-    toc.show()
   }
+
+  start()
 
   chrome.runtime.onMessage.addListener(
     (request: 'toggle' | 'prev' | 'next', sender, sendResponse) => {
       try {
-        if (!toc) {
-          start()
-        } else {
-          toc[request]()
+        switch (request) {
+          case 'toggle': {
+            if (isRunning()) {
+              stop()
+            } else {
+              start()
+            }
+            break
+          }
+          case 'prev':
+          case 'next': {
+            if (!isRunning()) {
+              start()
+            } else {
+              if (request === 'next') {
+                toc!.goToNextHeading()
+              }
+              if (request === 'prev') {
+                toc!.goToPreviousHeading()
+              }
+              console.warn('unknown request', request)
+            }
+            break
+          }
+
+          default:
+            console.warn('unknown request', request)
+            break
         }
+
         sendResponse(true)
       } catch (e) {
         logger.error(e)
@@ -55,6 +83,8 @@ if (window === mainWindow) {
       }
     },
   )
+}
 
-  start()
+if (window === mainWindow) {
+  main()
 }
