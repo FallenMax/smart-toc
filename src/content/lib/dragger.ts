@@ -83,7 +83,7 @@ export const createDragger = (options: DragOptions) => {
     }
   }
 
-  const mousedownDisposer = createDisposer()
+  const mousedown = createDisposer()
   const onMouseDown = (e: MouseEvent) => {
     const target = e.target as HTMLElement
     if (
@@ -100,12 +100,10 @@ export const createDragger = (options: DragOptions) => {
 
     originalRect = getOriginalRect(true)!
     setStartOffset({ ...currentOffset })
-    mousedownDisposer.record(listen(document, 'mousemove', onMouseMove))
-    mousedownDisposer.record(listen(document, 'mouseup', onMouseUp))
-    mousedownDisposer.record(
-      addClass(document.documentElement, IS_DRAGGING_CLASS),
-    )
-    mousedownDisposer.record(() => (drag = undefined))
+    mousedown.R(listen(document, 'mousemove', onMouseMove))
+    mousedown.R(listen(document, 'mouseup', onMouseUp))
+    mousedown.R(addClass(document.documentElement, IS_DRAGGING_CLASS))
+    mousedown.R(() => (drag = undefined))
     instance.emit('dragStateChanged')
   }
   const onMouseMove = (e: MouseEvent) => {
@@ -120,7 +118,7 @@ export const createDragger = (options: DragOptions) => {
   }
   const onMouseUp = () => {
     setStartOffset({ ...currentOffset })
-    mousedownDisposer.dispose()
+    mousedown.dispose()
     instance.emit('dragStateChanged')
   }
 
@@ -131,15 +129,15 @@ export const createDragger = (options: DragOptions) => {
     setStartOffset(offset)
   }
 
-  const { record, dispose } = createDisposer()
+  const { R, dispose } = createDisposer()
 
   const instance = {
     ...createEventEmitter<DraggableEvent>(),
 
     start() {
-      record(addCSS(draggerCss, 'smarttoc-dragger-css'))
-      record(listen(handle, 'mousedown', onMouseDown))
-      record(listen(window, 'resize', onResize))
+      R(addCSS(draggerCss, 'smarttoc-dragger-css'))
+      R(listen(handle, 'mousedown', onMouseDown))
+      R(listen(window, 'resize', onResize))
 
       const { x, y } = options.initialOffset || { x: 0, y: 0 }
       const initialOffset = getBoundedOffset(x, y, true)

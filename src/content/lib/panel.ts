@@ -42,19 +42,18 @@ export const createTocPanel = ({
   container: HTMLElement
   toc: Toc
 }) => {
-  const { record, dispose } = createDisposer()
-
   const instance = {
     start() {
-      record(addCSS(panelCss, 'smarttoc-panel-css'))
-      record(addCSS(tocCss, 'smarttoc-toc-css'))
+      const { R, dispose } = createDisposer()
+      R(addCSS(panelCss, 'smarttoc-panel-css'))
+      R(addCSS(tocCss, 'smarttoc-toc-css'))
 
       const $panel = createElement('nav', 'smarttoc-panel')
-      record(appendChild(container, $panel))
+      R(appendChild(container, $panel))
 
       const $handle = createElement('div', 'smarttoc-handle')
       $handle.textContent = 'table of contents'
-      record(appendChild($panel, $handle))
+      R(appendChild($panel, $handle))
 
       const dragger = createDragger({
         handle: $handle,
@@ -64,14 +63,14 @@ export const createTocPanel = ({
           lastOffset = offset
         },
       })
-      record(dragger.start())
+      R(dragger.start())
 
       const $toc = createElement('div', 'smarttoc')
-      record(appendChild($panel, $toc))
-      record(toc.start($toc))
+      R(appendChild($panel, $toc))
+      R(toc.start($toc))
 
-      let leaveReadable = noop
-      const applyReadableMode = (content: Content | undefined) => {
+      const useReadableMode = (content: Content | undefined) => {
+        let leaveReadable = noop
         if (content) {
           leaveReadable()
           leaveReadable = enterReadable(content)
@@ -81,8 +80,8 @@ export const createTocPanel = ({
         return () => leaveReadable()
       }
 
-      record(toc.on('contentChanged', applyReadableMode))
-      record(applyReadableMode(toc.getContent()))
+      R(toc.on('contentChanged', useReadableMode))
+      R(useReadableMode(toc.getContent()))
       return dispose
     },
   }

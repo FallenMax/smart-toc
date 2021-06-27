@@ -114,9 +114,9 @@ export type TocOptions = {
   appendPlaceholder?: boolean
 
   /**
-   * scroll to heading when clicked on toc
+   * jump to clicked heading
    */
-  scrollOnClick?: boolean
+  jumpOnClick?: boolean
 }
 
 export type TocEvent = {
@@ -152,9 +152,8 @@ export const createToc = ({
   gapFromScrollerTop,
   headingSelectors,
   appendPlaceholder = true,
-  scrollOnClick = true,
+  jumpOnClick = true,
 }: TocOptions) => {
-  const { record, dispose } = createDisposer()
   let content = extractContent(getElement(article))
   let dom: HTMLElement | undefined
 
@@ -250,43 +249,36 @@ export const createToc = ({
     instance.emit('activeHeadingChanged', index)
   }
 
-  const handleHeadingClicked = (e: MouseEvent) => {
-    const target = e.target as HTMLElement
-    const index = Number(target?.dataset.headingIndex)
-    if (Number.isNaN(index)) {
-      return
-    }
-    if (scrollOnClick) {
-      scrollToHeading(content, index, gapFromScrollerTop)
-    }
-  }
-
-  const bindArticleEvents = () => {
-    if (!content) {
-      return noop
-    }
-    const { scroller } = content
-
-    const emitter = scroller === document.body ? window : scroller
-    emitter.addEventListener('scroll', updateActiveHeading)
-    return () => {
-      emitter.removeEventListener('scroll', updateActiveHeading)
-    }
-  }
-
   const instance = {
     ...createEventEmitter<TocEvent>(),
     start(el?: HTMLElement) {
       dom = el
 
+      const { R, dispose } = createDisposer()
       if (dom) {
-        record(render(dom))
-        if (scrollOnClick) {
-          record(listen(dom, 'click', handleHeadingClicked))
+        R(render(dom))
+        if (jumpOnClick) {
+          R(
+            listen(dom, 'click', (e) => {
+              const target = e.target as HTMLElement
+              const index = Number(target?.dataset.headingIndex)
+              if (Number.isNaN(index)) {
+                return
+              }
+              if (jumpOnClick) {
+                scrollToHeading(content, index, gapFromScrollerTop)
+              }
+            }),
+          )
         }
         updateActiveHeading()
       }
-      record(bindArticleEvents())
+      if (content) {
+        const emitter =
+          content.scroller === document.body ? window : content.scroller
+        R(listen(emitter, 'scroll', updateActiveHeading))
+      }
+
       return dispose
     },
     getContent() {

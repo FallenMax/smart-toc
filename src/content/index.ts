@@ -21,20 +21,20 @@ if (window === mainWindow) {
       showToast('No article/headings are detected.')
       return noop
     }
-    const { record, dispose } = createDisposer()
+    const { R, dispose } = createDisposer()
 
     toc = createToc({ article: content.article })
     panel = createTocPanel({
       container: getContainer('smarttoc-container'),
       toc,
     })
-    record(() => {
+    R(() => {
       toc = undefined
       panel = undefined
     })
 
-    record(panel.start())
-    record(
+    R(panel.start())
+    R(
       toc.on('contentChanged', (content) => {
         if (!content) {
           showToast('No article/headings are detected.')
