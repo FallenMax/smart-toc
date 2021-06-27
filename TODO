@@ -1,0 +1,17 @@
+
+api:
+  ☐ toc-js
+  ☐ toc-react
+  ☐ toc-custom-element
+  ☐ toc-vue
+  
+feature:
+  ☐ topbar height auto-measure
+  ✔ readable mode @done(21-06-26 21:22)
+  ✔ draggable @done(21-06-26 19:24)
+  ✔ remembers last drag position @done(21-06-26 21:52)
+  ☐ scroll to active toc heading when out-of-view
+  ☐ choose best spot to place panel
+  ☐ auto-fold headings with level >2 if too many
+  ☐ reflect on article change
+  ☐ reflect on headings change

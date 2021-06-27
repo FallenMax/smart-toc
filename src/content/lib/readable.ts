@@ -7,26 +7,19 @@ import { noop } from '../util/noop'
 const EXTENDER_ID = 'smarttoc-extender'
 const addExtender = (content: Content, topbarHeight: number) => {
   const { article, scroller, headings } = content
-  let extender: HTMLElement | null = scroller.dom.querySelector(
-    '#' + EXTENDER_ID,
-  )
+  let extender: HTMLElement | null = scroller.querySelector('#' + EXTENDER_ID)
   if (!extender) {
     extender = document.createElement('div')
     extender.id = EXTENDER_ID
-    scroller.dom.appendChild(extender)
+    scroller.appendChild(extender)
   }
   const extenderHeight = extender.offsetHeight
 
-  const bottomHeading = headings.sort(
-    (a, b) => b.fromArticleTop! - a.fromArticleTop!,
-  )[0]
+  const bottomHeading = headings.sort((a, b) => b! - a.fromArticleTop!)[0]
   if (!bottomHeading) {
     return noop
   }
 
-  /**
-   * @see ../../../doc/illustration.svg
-   */
   const requiredExtenderHeight = Math.max(
     0,
     scroller.rect.bottom -
@@ -44,7 +37,10 @@ const addExtender = (content: Content, topbarHeight: number) => {
   }
 }
 
-const addReadableStyle = (article: HTMLElement) => {
+export let leaveReadable = noop
+export const enterReadable = (content: Content) => {
+  leaveReadable()
+  const { article } = content
   const computed = window.getComputedStyle(article)
   const rect = article.getBoundingClientRect()
 
@@ -64,27 +60,24 @@ const addReadableStyle = (article: HTMLElement) => {
 
   const oldStyle = article.style.cssText
   setStyle(article, readableStyle)
-  return () => {
+  leaveReadable = () => {
     setStyle(article, oldStyle)
   }
 }
 
-let removeReadableStyle = noop
-let removeExtender = noop
+// export const enterReadableMode = (
+//   content: Content,
+//   { topbarHeight }: { topbarHeight: number },
+// ): void => {
+//   leaveReadableMode()
 
-export const enterReadableMode = (
-  content: Content,
-  { topbarHeight }: { topbarHeight: number },
-): void => {
-  leaveReadableMode()
+//   removeReadableStyle = enterReadable(content.article.dom)
 
-  removeReadableStyle = addReadableStyle(content.article.dom)
+//   // TODO addReadableStyle() changes layout of article, could require updating heading.fromArticleTop
+//   removeExtender = addExtender(content, topbarHeight)
+// }
 
-  // TODO addReadableStyle() changes layout of article, could require updating heading.fromArticleTop
-  removeExtender = addExtender(content, topbarHeight)
-}
-
-export const leaveReadableMode = () => {
-  removeReadableStyle()
-  removeExtender()
-}
+// export const leaveReadableMode = () => {
+//   removeReadableStyle()
+//   removeExtender()
+// }

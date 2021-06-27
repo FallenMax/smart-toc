@@ -12,15 +12,16 @@ export const getScrollTop = (elem: HTMLElement): number => {
 export const setScrollTop = (elem: HTMLElement, val: number): void => {
   if (elem === document.body) {
     document.documentElement.scrollTop = val
-    window.scrollTo(window.scrollX, val)
+    window.scrollTo(window.scrollY, val)
   } else {
     elem.scrollTop = val
   }
 }
 
+const SCROLLABLE_VALUES = ['auto', 'scroll']
 export const canScroll = (el: HTMLElement) => {
   return (
-    ['auto', 'scroll'].includes(window.getComputedStyle(el)!.overflowY!) &&
+    SCROLLABLE_VALUES.includes(window.getComputedStyle(el)!.overflowY!) &&
     el.clientHeight + 1 < el.scrollHeight
   )
 }

@@ -1,24 +1,4 @@
 #smarttoc {
-  all: initial;
-}
-
-#smarttoc *,
-#smarttoc *::before,
-#smarttoc *::after {
-  all: unset;
-}
-
-#smarttoc {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  position: fixed;
-  left: 0px;
-  top: 0px;
-  min-width: 14em;
-  max-width: 50vw;
-  max-height: 100vh;
-  z-index: 10000;
   box-sizing: border-box;
   background-color: #fff;
   color: gray;
@@ -26,50 +6,8 @@
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: normal;
-  border: 1px solid rgba(158, 158, 158, 0.22);
   -webkit-font-smoothing: subpixel-antialiased;
   font-smoothing: subpixel-antialiased;
-  overflow: hidden;
-  will-change: transform, max-width;
-  transition: max-width 0.3s;
-  contain: content;
-}
-
-#smarttoc.hidden {
-  display: none;
-}
-
-#smarttoc .handle {
-  -webkit-user-select: none;
-  user-select: none;
-
-  border-bottom: 1px solid rgba(158, 158, 158, 0.22);
-  padding: 0.1em 0.7em;
-  font-variant-caps: inherit;
-  font-variant: small-caps;
-  font-size: 0.9em;
-  color: #bbb;
-  cursor: pointer;
-  text-align: center;
-  opacity: 0;
-  will-change: opacity;
-  transition: opacity 0.3s;
-}
-
-#smarttoc:hover .handle {
-  max-width: 100vw;
-  opacity: 1;
-}
-
-#smarttoc .handle:hover {
-  cursor: grab;
-}
-#smarttoc .handle:active {
-  cursor: grabbing;
-}
-
-#smarttoc .handle:active {
-  background: #f9f9f9;
 }
 
 #smarttoc > ul {

@@ -7,11 +7,10 @@ import { logger } from './util/logger'
 import { noop } from './util/noop'
 
 const mainWindow = detectMainWindow()
-const main = () => {
+
+if (window === mainWindow) {
   let toc: Toc | undefined
   let panel: TocPanel | undefined
-
-  const isRunning = () => toc != null
 
   let stop = noop
   const start = () => {
@@ -24,13 +23,15 @@ const main = () => {
 
     toc = createToc({ article: content.article })
     panel = createTocPanel({
+      container: getContainer('smarttoc-container'),
       toc,
     })
-    panel.render(getContainer('smarttoc-container'))
 
     stop = () => {
       toc?.destroy()
       panel?.destroy()
+      toc = undefined
+      panel = undefined
     }
 
     toc.on('contentChanged', (content) => {
@@ -41,14 +42,12 @@ const main = () => {
     })
   }
 
-  start()
-
   chrome.runtime.onMessage.addListener(
     (request: 'toggle' | 'prev' | 'next', sender, sendResponse) => {
       try {
         switch (request) {
           case 'toggle': {
-            if (isRunning()) {
+            if (toc) {
               stop()
             } else {
               start()
@@ -57,16 +56,16 @@ const main = () => {
           }
           case 'prev':
           case 'next': {
-            if (!isRunning()) {
+            if (!toc) {
               start()
             } else {
               if (request === 'next') {
-                toc!.goToNextHeading()
+                toc.goToNextHeading()
+              } else if (request === 'prev') {
+                toc.goToPreviousHeading()
+              } else {
+                console.warn('unknown request', request)
               }
-              if (request === 'prev') {
-                toc!.goToPreviousHeading()
-              }
-              console.warn('unknown request', request)
             }
             break
           }
@@ -83,8 +82,6 @@ const main = () => {
       }
     },
   )
-}
 
-if (window === mainWindow) {
-  main()
+  start()
 }

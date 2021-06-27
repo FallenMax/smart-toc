@@ -1,0 +1,71 @@
+#smarttoc-panel {
+  all: initial;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  position: fixed;
+  z-index: 10000;
+  left: 0px;
+  top: 0px;
+
+  min-width: 14em;
+  max-width: 50vw;
+  max-height: 100vh;
+  overflow: hidden;
+  will-change: transform, max-width;
+  transition: max-width 0.3s;
+  contain: content;
+
+  background-color: #fff;
+  border: 1px solid rgba(158, 158, 158, 0.22);
+
+  box-sizing: border-box;
+  color: gray;
+  font-size: calc(12px + 0.1vw);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: normal;
+  -webkit-font-smoothing: subpixel-antialiased;
+  font-smoothing: subpixel-antialiased;
+}
+
+#smarttoc-panel *,
+#smarttoc-panel *::before,
+#smarttoc-panel *::after {
+  all: unset;
+}
+
+#smarttoc-handle {
+  -webkit-user-select: none;
+  user-select: none;
+
+  border-bottom: 1px solid rgba(158, 158, 158, 0.22);
+  padding: 0.1em 0.7em;
+  font-variant-caps: inherit;
+  font-variant: small-caps;
+  font-size: 0.9em;
+  color: #bbb;
+  cursor: pointer;
+  text-align: center;
+  opacity: 0;
+  will-change: opacity;
+  transition: opacity 0.3s;
+}
+
+#smarttoc-handle:hover {
+  cursor: grab;
+}
+#smarttoc-handle:active {
+  cursor: grabbing;
+}
+
+#smarttoc-handle:active {
+  background: #f9f9f9;
+}
+
+#smarttoc-panel:hover #smarttoc-handle {
+  max-width: 100vw;
+  opacity: 1;
+}

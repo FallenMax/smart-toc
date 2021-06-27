@@ -29,6 +29,13 @@ export interface Content {
   headings: Heading[]
 }
 
+export type Measurements = {
+  articleRect: DOMRect
+  scrollerRect: DOMRect
+  scrollY: number
+  headingRects: DOMRect[]
+}
+
 export interface Offset {
   x: number
   y: number

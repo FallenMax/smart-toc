@@ -6,7 +6,8 @@
   "scripts": {
     "clean": "rm -rf dist/* firefox/* chrome/*",
     "prestart": "yarn run clean",
-    "start": "export ENV=development && yarn run build:background && rollup --config rollup.config.js --watch & yarn run lint:watch",
+    "start": "export ENV=development && yarn run build:background && rollup --config rollup.config.js --watch ",
+    "start2": "export ENV=development && yarn run build:background && rollup --config rollup.config.js --watch & yarn run lint:watch",
     "build": "export ENV=production && yarn run clean; yarn run build:content && yarn run build:background && yarn run build:chrome && yarn run build:firefox",
     "lint:watch": "tsc --project tsconfig.json  --watch --incremental --tsBuildInfoFile ./tmp/.tsbuildinfo",
     "build:content": "rollup --config rollup.config.js",

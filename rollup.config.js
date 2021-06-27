@@ -11,7 +11,9 @@ export default {
     name: 'smarttoc',
   },
   plugins: [
-    esbuild(),
+    esbuild({
+      target: 'esnext',
+    }),
     nodeResolve({ main: true, browser: true }),
     commonjs(),
     string({ include: '**/*.css' }),

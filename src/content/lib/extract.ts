@@ -1,4 +1,5 @@
 import { Content, Heading, HeadingNode } from '../types'
+import { flatten } from '../util/array/flatten'
 import { fromArrayLike } from '../util/arraylike'
 import { highlight } from '../util/dom/highlight'
 import { canScroll, getScrollElement } from '../util/dom/scroll'
@@ -248,7 +249,6 @@ export const toTree = (headings: Heading[]) => {
 
   const goUp = () => {
     stack.pop()
-    console.log('up', stack, tree)
   }
   const goDown = () => {
     const stackTop = stack[stack.length - 1]
@@ -259,7 +259,6 @@ export const toTree = (headings: Heading[]) => {
       stackTop.children.push({})
     }
     stack.push(stackTop.children[stackTop.children.length - 1])
-    console.log('down', stack, tree)
   }
   const appendHeading = (heading?: Heading) => {
     const stackTop = stack[stack.length - 1]
@@ -269,7 +268,6 @@ export const toTree = (headings: Heading[]) => {
     stackTop.children.push({
       heading,
     })
-    console.log('append', stack, tree)
   }
 
   headings.forEach((heading, i) => {
@@ -328,7 +326,7 @@ export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
       }
     })
 
-  const headingElements = new Set(...headingTagGroups.map((g) => g.elems))
+  const headingElements = new Set(flatten(headingTagGroups.map((g) => g.elems)))
 
   const headingTags = headingTagGroups.map((headings) => headings.tag)
 
