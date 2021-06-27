@@ -4,6 +4,8 @@ import {
   Heading,
   Measurements as Measurements,
 } from '../types'
+import { createDisposer } from '../util/disposer'
+import { listen } from '../util/dom/el'
 import {
   getScrollElement,
   getScrollTop,
@@ -12,6 +14,74 @@ import {
 import { createEventEmitter } from '../util/event'
 import { noop } from '../util/noop'
 import { extractArticle, extractHeadings, toTree } from './extract'
+
+const scrollToHeading = (
+  content: Content | undefined,
+  index: number,
+  gapFromScrollerTop: number | undefined,
+) => {
+  if (!content) {
+    return
+  }
+  const { scroller, headings } = content
+  const heading = headings[index]
+  if (heading) {
+    smoothScroll({
+      target: heading.dom,
+      scroller: scroller,
+      topMargin: gapFromScrollerTop ?? 0 + 10, // TODO measure topBar
+      onFinish() {
+        // TODO measure
+        // $triggerTopbarMeasure(heading.dom)
+      },
+    })
+  }
+}
+
+const measureContent = (content: Content) => {
+  return {
+    articleRect: content.article.getBoundingClientRect(),
+    scrollerRect: content.scroller.getBoundingClientRect(),
+    scrollY: getScrollTop(content.scroller),
+    headingRects: content.headings.map((h) => h.dom.getBoundingClientRect()),
+  }
+}
+
+const extractContent = (article: Article | undefined) => {
+  if (!article) {
+    return undefined
+  }
+  const headings = extractHeadings(article)
+  const scroller = getScrollElement(article)
+  if (headings && scroller) {
+    return { article, headings, scroller }
+  } else {
+    return undefined
+  }
+}
+
+const calcActiveHeading = (
+  content: Content,
+  measurements: Measurements,
+  gapFromScrollerTop?: number,
+) => {
+  const { scroller } = content
+  const m = measurements
+
+  const visibleAreaTop = Math.max(gapFromScrollerTop ?? 0, m.scrollerRect.top)
+  const scrollY = getScrollTop(scroller)
+
+  for (let i = 0; i < m.headingRects.length; i++) {
+    const rect = m.headingRects[i]
+    let top = rect.top + m.scrollY - scrollY
+    const isCompletelyVisible = top >= visibleAreaTop + 15
+    if (isCompletelyVisible) {
+      // the 'nearly-visible' heading is the current heading
+      return Math.max(0, i - 1)
+    }
+  }
+  return m.headingRects.length - 1
+}
 
 export type TocOptions = {
   /**
@@ -61,23 +131,6 @@ const getElement = (el: string | HTMLElement | undefined) => {
   return el
 }
 
-const areHeadingsEqual = (
-  a: Heading[] | undefined,
-  b: Heading[] | undefined,
-) => {
-  if (a && b) {
-    return (
-      a.length === b.length &&
-      a.every((ha, i) => {
-        const hb = b[i]
-        return ha.dom === hb.dom && ha.level === hb.level && ha.text === hb.text
-      })
-    )
-  } else {
-    return a === b
-  }
-}
-
 type HeadingNode = {
   heading?: Heading | undefined
   children?: HeadingNode[]
@@ -101,105 +154,83 @@ export const createToc = ({
   appendPlaceholder = true,
   scrollOnClick = true,
 }: TocOptions) => {
-  let isDestroyed = false
-  let content: Content | undefined
-  let measurements: Measurements | undefined
+  const { record, dispose } = createDisposer()
+  let content = extractContent(getElement(article))
   let dom: HTMLElement | undefined
+
+  // derived states
+  let measurements: Measurements | undefined
+  const ensureMeasurements = (content: Content) => {
+    if (!measurements) {
+      measurements = measureContent(content)
+    }
+    return measurements
+  }
   let headingTree: HeadingNode | undefined
   let activeHeading = -1
   let activeLIs = [] as HTMLElement[]
-
-  const updateContent = (article: Article | undefined) => {
+  const clearDerivedStates = () => {
     measurements = undefined
     headingTree = undefined
     activeHeading = -1
     activeLIs = []
-    if (article) {
-      const headings = extractHeadings(article)
-      const scroller = getScrollElement(article)
-      if (headings && scroller) {
-        content = { article, headings, scroller }
-        instance.emit('contentChanged', content)
-        return
-      }
-    }
-
-    content = undefined
-    instance.emit('contentChanged', content)
   }
 
-  const updateMeasurements = () => {
+  const render = (dom: HTMLElement) => {
     if (!content) {
-      measurements = undefined
-      return
-    }
-    measurements = {
-      articleRect: content.article.getBoundingClientRect(),
-      scrollerRect: content.scroller.getBoundingClientRect(),
-      scrollY: getScrollTop(content.scroller),
-      headingRects: content.headings.map((h) => h.dom.getBoundingClientRect()),
-    }
-  }
-
-  const appendHeadingNode = (
-    parent: HTMLElement | DocumentFragment,
-    node: HeadingNode,
-  ) => {
-    const { heading, children } = node
-
-    if (heading) {
-      const a = document.createElement('a')
-      a.dataset.headingIndex = String(heading.index)
-      a.textContent = heading.text
-      parent.appendChild(a)
-    }
-    if (children?.length) {
-      const ul = document.createElement('ul')
-      for (let index = 0; index < children.length; index++) {
-        const c = children[index]
-        const li = document.createElement('li')
-        appendHeadingNode(li, c)
-        ul.appendChild(li)
-      }
-      parent.appendChild(ul)
-    }
-  }
-
-  let unrender = noop
-  const render = () => {
-    if (!dom) {
-      return
-    }
-
-    if (!content) {
-      return
+      return noop
     }
 
     const fragment = new DocumentFragment()
     if (!headingTree) {
       headingTree = toTree(content.headings)
     }
+
+    const appendHeadingNode = (
+      parent: HTMLElement | DocumentFragment,
+      node: HeadingNode,
+    ) => {
+      const { heading, children } = node
+
+      if (heading) {
+        const a = document.createElement('a')
+        a.dataset.headingIndex = String(heading.index)
+        a.textContent = heading.text
+        parent.appendChild(a)
+      }
+      if (children?.length) {
+        const ul = document.createElement('ul')
+        for (let index = 0; index < children.length; index++) {
+          const c = children[index]
+          const li = document.createElement('li')
+          appendHeadingNode(li, c)
+          ul.appendChild(li)
+        }
+        parent.appendChild(ul)
+      }
+    }
+
     appendHeadingNode(fragment, headingTree)
 
     dom.appendChild(fragment)
 
     updateActiveHeading()
 
-    if (scrollOnClick) {
-      dom.addEventListener('click', handleHeadingClicked)
-    }
-    unrender = () => {
+    return () => {
       if (dom) {
         dom.innerHTML = ''
-        dom.removeEventListener('click', handleHeadingClicked)
       }
     }
   }
 
-  let unbindArticleEvents = noop
-
   const updateActiveHeading = () => {
-    const index = calcActiveHeading()
+    const index = content
+      ? calcActiveHeading(
+          content,
+          ensureMeasurements(content),
+          gapFromScrollerTop,
+        )
+      : -1
     if (index === activeHeading) {
       return
     }
@@ -207,7 +238,6 @@ export const createToc = ({
 
     if (dom) {
       activeLIs.forEach((li) => li.classList.remove('active'))
-
       let current = dom.querySelector(`[data-heading-index="${index}"]`)
       while (current && current !== dom) {
         if (current.tagName === 'LI') {
@@ -220,25 +250,6 @@ export const createToc = ({
     instance.emit('activeHeadingChanged', index)
   }
 
-  const scrollToHeading = (index: number) => {
-    if (!content) {
-      return
-    }
-    const { scroller, headings } = content
-    const heading = headings[index]
-    if (heading) {
-      smoothScroll({
-        target: heading.dom,
-        scroller: scroller,
-        topMargin: gapFromScrollerTop ?? 0 + 10, // TODO measure topBar
-        onFinish() {
-          // TODO measure
-          // $triggerTopbarMeasure(heading.dom)
-        },
-      })
-    }
-  }
-
   const handleHeadingClicked = (e: MouseEvent) => {
     const target = e.target as HTMLElement
     const index = Number(target?.dataset.headingIndex)
@@ -246,36 +257,11 @@ export const createToc = ({
       return
     }
     if (scrollOnClick) {
-      scrollToHeading(index)
+      scrollToHeading(content, index, gapFromScrollerTop)
     }
-  }
-  const calcActiveHeading = () => {
-    if (!content) {
-      return -1
-    }
-    const { scroller } = content
-    if (!measurements) {
-      updateMeasurements()
-    }
-    const m = measurements!
-
-    const visibleAreaTop = Math.max(gapFromScrollerTop ?? 0, m.scrollerRect.top)
-    const scrollY = getScrollTop(scroller)
-
-    for (let i = 0; i < m.headingRects.length; i++) {
-      const rect = m.headingRects[i]
-      let top = rect.top + m.scrollY - scrollY
-      const isCompletelyVisible = top >= visibleAreaTop + 15
-      if (isCompletelyVisible) {
-        // the 'nearly-visible' heading is the current heading
-        return Math.max(0, i - 1)
-      }
-    }
-    return m.headingRects.length - 1
   }
 
   const bindArticleEvents = () => {
-    unbindArticleEvents()
     if (!content) {
       return noop
     }
@@ -290,66 +276,48 @@ export const createToc = ({
 
   const instance = {
     ...createEventEmitter<TocEvent>(),
-    initialize() {
-      updateContent(getElement(article))
-      updateMeasurements()
-      render()
-      unbindArticleEvents = bindArticleEvents()
+    start(el?: HTMLElement) {
+      dom = el
+
+      if (dom) {
+        record(render(dom))
+        if (scrollOnClick) {
+          record(listen(dom, 'click', handleHeadingClicked))
+        }
+        updateActiveHeading()
+      }
+      record(bindArticleEvents())
+      return dispose
     },
     getContent() {
       return content
     },
     getMeasurements() {
       if (content && !measurements) {
-        updateMeasurements()
+        measurements = measureContent(content)
       }
       return measurements
     },
 
     goToHeading(index: number) {
-      scrollToHeading(index)
+      scrollToHeading(content, index, gapFromScrollerTop)
     },
     goToNextHeading() {
-      if (!content || activeHeading == null) {
+      if (!content || activeHeading === -1) {
         return
       }
       const next = (activeHeading + 1) % content.headings.length
-      scrollToHeading(next)
+      instance.goToHeading(next)
     },
     goToPreviousHeading() {
-      if (!content || activeHeading == null) {
+      if (!content || activeHeading === -1) {
         return
       }
       const next =
         (activeHeading - 1 + content.headings.length) % content.headings.length
-      scrollToHeading(next)
-    },
-    render(d: HTMLElement) {
-      if (dom !== d) {
-        unrender()
-        dom = d
-      }
-      render()
-      return unrender
-    },
-    destroy() {
-      if (isDestroyed) {
-        return
-      }
-      unbindArticleEvents()
-      isDestroyed = true
-      content = undefined
-      measurements = undefined
-      headingTree = undefined
-      activeLIs = []
-      if (dom) {
-        dom.innerHTML = ''
-      }
-      instance.removeAllListeners()
+      instance.goToHeading(next)
     },
   }
-
-  instance.initialize()
 
   return instance
 }

@@ -1,9 +1,11 @@
-import { Content, Disposer } from '../types'
+import { Content } from '../types'
+import { createDisposer } from '../util/disposer'
 import { addCSS } from '../util/dom/css'
 import { appendChild, createElement } from '../util/dom/el'
+import { noop } from '../util/noop'
 import { createDragger, DragOffset } from './dragger'
 import panelCss from './panel.css'
-import { enterReadable, leaveReadable } from './readable'
+import { enterReadable } from './readable'
 import { Toc } from './toc'
 import tocCss from './toc.css'
 
@@ -40,15 +42,10 @@ export const createTocPanel = ({
   container: HTMLElement
   toc: Toc
 }) => {
-  let disposers: Disposer[] = []
-  const record = (cb: Disposer) => disposers.push(cb)
-  const dispose = () => {
-    disposers.reverse().forEach((d) => d()) // cancel each effect in reverse order
-    disposers = []
-  }
+  const { record, dispose } = createDisposer()
 
   const instance = {
-    initialize() {
+    start() {
       record(addCSS(panelCss, 'smarttoc-panel-css'))
       record(addCSS(tocCss, 'smarttoc-toc-css'))
 
@@ -71,11 +68,13 @@ export const createTocPanel = ({
 
       const $toc = createElement('div', 'smarttoc')
       record(appendChild($panel, $toc))
-      record(toc.render($toc))
+      record(toc.start($toc))
 
+      let leaveReadable = noop
       const applyReadableMode = (content: Content | undefined) => {
         if (content) {
-          enterReadable(content)
+          leaveReadable()
+          leaveReadable = enterReadable(content)
         } else {
           leaveReadable()
         }
@@ -84,13 +83,9 @@ export const createTocPanel = ({
 
       record(toc.on('contentChanged', applyReadableMode))
       record(applyReadableMode(toc.getContent()))
-    },
-    destroy() {
-      dispose()
+      return dispose
     },
   }
-
-  instance.initialize()
 
   return instance
 }

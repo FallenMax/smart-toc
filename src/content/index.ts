@@ -2,6 +2,7 @@ import { detectMainWindow, extractContent } from './lib/extract'
 import { createTocPanel, TocPanel } from './lib/panel'
 import { showToast } from './lib/toast'
 import { createToc, Toc } from './lib/toc'
+import { createDisposer } from './util/disposer'
 import { getContainer } from './util/dom/get_container'
 import { logger } from './util/logger'
 import { noop } from './util/noop'
@@ -18,28 +19,30 @@ if (window === mainWindow) {
 
     if (!content) {
       showToast('No article/headings are detected.')
-      return
+      return noop
     }
+    const { record, dispose } = createDisposer()
 
     toc = createToc({ article: content.article })
     panel = createTocPanel({
       container: getContainer('smarttoc-container'),
       toc,
     })
-
-    stop = () => {
-      toc?.destroy()
-      panel?.destroy()
+    record(() => {
       toc = undefined
       panel = undefined
-    }
-
-    toc.on('contentChanged', (content) => {
-      if (!content) {
-        showToast('No article/headings are detected.')
-        stop()
-      }
     })
+
+    record(panel.start())
+    record(
+      toc.on('contentChanged', (content) => {
+        if (!content) {
+          showToast('No article/headings are detected.')
+          stop()
+        }
+      }),
+    )
+    return dispose
   }
 
   chrome.runtime.onMessage.addListener(
@@ -50,14 +53,14 @@ if (window === mainWindow) {
             if (toc) {
               stop()
             } else {
-              start()
+              stop = start()
             }
             break
           }
           case 'prev':
           case 'next': {
             if (!toc) {
-              start()
+              stop = start()
             } else {
               if (request === 'next') {
                 toc.goToNextHeading()
@@ -83,5 +86,5 @@ if (window === mainWindow) {
     },
   )
 
-  start()
+  stop = start()
 }

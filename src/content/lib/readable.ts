@@ -37,9 +37,7 @@ const addExtender = (content: Content, topbarHeight: number) => {
   }
 }
 
-export let leaveReadable = noop
 export const enterReadable = (content: Content) => {
-  leaveReadable()
   const { article } = content
   const computed = window.getComputedStyle(article)
   const rect = article.getBoundingClientRect()
@@ -60,24 +58,7 @@ export const enterReadable = (content: Content) => {
 
   const oldStyle = article.style.cssText
   setStyle(article, readableStyle)
-  leaveReadable = () => {
+  return () => {
     setStyle(article, oldStyle)
   }
 }
-
-// export const enterReadableMode = (
-//   content: Content,
-//   { topbarHeight }: { topbarHeight: number },
-// ): void => {
-//   leaveReadableMode()
-
-//   removeReadableStyle = enterReadable(content.article.dom)
-
-//   // TODO addReadableStyle() changes layout of article, could require updating heading.fromArticleTop
-//   removeExtender = addExtender(content, topbarHeight)
-// }
-
-// export const leaveReadableMode = () => {
-//   removeReadableStyle()
-//   removeExtender()
-// }
