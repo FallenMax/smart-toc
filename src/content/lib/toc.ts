@@ -330,6 +330,7 @@ export const createToc = ({
         dom = d
       }
       render()
+      return unrender
     },
     destroy() {
       if (isDestroyed) {

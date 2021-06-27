@@ -1,6 +1,7 @@
-import { Content } from '../types'
-import { addCSS, removeCSS } from '../util/dom/css'
-import { createDragger, Dragger, DragOffset } from './dragger'
+import { Content, Disposer } from '../types'
+import { addCSS } from '../util/dom/css'
+import { appendChild, createElement } from '../util/dom/el'
+import { createDragger, DragOffset } from './dragger'
 import panelCss from './panel.css'
 import { enterReadable, leaveReadable } from './readable'
 import { Toc } from './toc'
@@ -39,30 +40,26 @@ export const createTocPanel = ({
   container: HTMLElement
   toc: Toc
 }) => {
-  let isDestroyed = false
-  let $panel: HTMLElement | undefined
-  let $toc: HTMLElement | undefined
-  let $handle: HTMLElement | undefined
-  let dragger: Dragger | undefined
+  let disposers: Disposer[] = []
+  const record = (cb: Disposer) => disposers.push(cb)
+  const dispose = () => {
+    disposers.reverse().forEach((d) => d()) // cancel each effect in reverse order
+    disposers = []
+  }
 
   const instance = {
     initialize() {
-      if (isDestroyed || $panel) {
-        return
-      }
+      record(addCSS(panelCss, 'smarttoc-panel-css'))
+      record(addCSS(tocCss, 'smarttoc-toc-css'))
 
-      addCSS(panelCss, 'smarttoc-panel-css')
-      addCSS(tocCss, 'smarttoc-toc-css')
+      const $panel = createElement('nav', 'smarttoc-panel')
+      record(appendChild(container, $panel))
 
-      $panel = document.createElement('nav')
-      $panel.id = 'smarttoc-panel'
-      container.appendChild($panel)
-
-      $handle = document.createElement('div')
-      $handle.id = 'smarttoc-handle'
+      const $handle = createElement('div', 'smarttoc-handle')
       $handle.textContent = 'table of contents'
-      $panel.appendChild($handle)
-      dragger = createDragger({
+      record(appendChild($panel, $handle))
+
+      const dragger = createDragger({
         handle: $handle,
         container: $panel,
         initialOffset: lastOffset,
@@ -70,15 +67,11 @@ export const createTocPanel = ({
           lastOffset = offset
         },
       })
-      dragger.start()
+      record(dragger.start())
 
-      $toc = document.createElement('div')
-      $toc.id = 'smarttoc'
-      $panel.appendChild($toc)
-
-      const measurement = toc.getMeasurements()
-
-      toc.render($toc)
+      const $toc = createElement('div', 'smarttoc')
+      record(appendChild($panel, $toc))
+      record(toc.render($toc))
 
       const applyReadableMode = (content: Content | undefined) => {
         if (content) {
@@ -86,25 +79,14 @@ export const createTocPanel = ({
         } else {
           leaveReadable()
         }
+        return () => leaveReadable()
       }
-      toc.on('contentChanged', applyReadableMode)
-      applyReadableMode(toc.getContent())
+
+      record(toc.on('contentChanged', applyReadableMode))
+      record(applyReadableMode(toc.getContent()))
     },
     destroy() {
-      if (isDestroyed) {
-        return
-      }
-      isDestroyed = true
-
-      if ($panel) {
-        $panel.remove()
-        $panel = undefined
-        leaveReadable()
-        removeCSS('smarttoc-panel-css')
-        removeCSS('smarttoc-toc-css')
-        dragger?.destroy()
-        dragger = undefined
-      }
+      dispose()
     },
   }
 

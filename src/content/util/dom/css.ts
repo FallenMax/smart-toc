@@ -33,6 +33,9 @@ export const addCSS = (css: string, cssId: string) => {
     style.textContent = css
     document.head.appendChild(style)
   }
+  return () => {
+    style?.remove()
+  }
 }
 export const removeCSS = (cssId: string) => {
   const style = document.getElementById(cssId)

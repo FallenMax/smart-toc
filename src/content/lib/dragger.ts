@@ -130,6 +130,16 @@ export const createDragger = (options: DragOptions) => {
     setStartOffset(offset)
   }
 
+  const destroy = () => {
+    handle?.removeEventListener('mousedown', onMouseDown)
+    document.removeEventListener('mousemove', onMouseMove)
+    document.removeEventListener('mouseup', onMouseUp)
+    window.removeEventListener('resize', onResize)
+    target = undefined
+    handle = undefined
+    removeCSS('smarttoc-dragger-css')
+  }
+
   const instance = {
     ...createEventEmitter<DraggableEvent>(),
 
@@ -141,18 +151,7 @@ export const createDragger = (options: DragOptions) => {
       const { x, y } = options.initialOffset || { x: 0, y: 0 }
       const initialOffset = getBoundedOffset(x, y, true)
       setCurrentOffset(initialOffset)
-    },
-    destroy() {
-      handle?.removeEventListener('mousedown', onMouseDown)
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
-      window.removeEventListener('resize', onResize)
-      target = undefined
-      handle = undefined
-      removeCSS('smarttoc-dragger-css')
-    },
-    isDragging() {
-      return drag != null
+      return destroy
     },
   }
   return instance
