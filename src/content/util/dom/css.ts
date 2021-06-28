@@ -37,10 +37,6 @@ export const addCSS = (css: string, cssId: string) => {
     style?.remove()
   }
 }
-export const removeCSS = (cssId: string) => {
-  const style = document.getElementById(cssId)
-  style?.remove()
-}
 
 // '12px','12' => 12
 export const fromPx = (size: string): number => {

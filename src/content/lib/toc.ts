@@ -5,7 +5,7 @@ import {
   Measurements as Measurements,
 } from '../types'
 import { createDisposer } from '../util/disposer'
-import { listen } from '../util/dom/el'
+import { addClass, listen } from '../util/dom/el'
 import {
   getScrollElement,
   getScrollTop,
@@ -61,10 +61,13 @@ const extractContent = (article: Article | undefined) => {
 }
 
 const calcActiveHeading = (
-  content: Content,
-  measurements: Measurements,
+  content: Content | undefined,
+  measurements: Measurements | undefined,
   gapFromScrollerTop?: number,
 ) => {
+  if (!content || !measurements) {
+    return -1
+  }
   const { scroller } = content
   const m = measurements
 
@@ -110,13 +113,24 @@ export type TocOptions = {
    *
    * this is to ensure that we can scroll to last heading, even if last paragraph is not tall enough,
    * the placeholder will be removed when toc is destroyed
+   *
+   * @default true
    */
   appendPlaceholder?: boolean
 
   /**
    * jump to clicked heading
+   *
+   * @default true
    */
   jumpOnClick?: boolean
+
+  /**
+   * highlight current heading when scroll on article
+   *
+   * @default true
+   */
+  highlightOnScroll?: boolean
 }
 
 export type TocEvent = {
@@ -129,6 +143,45 @@ const getElement = (el: string | HTMLElement | undefined) => {
     return document.getElementById(el) ?? undefined
   }
   return el
+}
+
+const renderToc = (dom: HTMLElement, content: Content) => {
+  const fragment = new DocumentFragment()
+  const headingTree = toTree(content.headings)
+
+  const appendHeadingNode = (
+    parent: HTMLElement | DocumentFragment,
+    node: HeadingNode,
+  ) => {
+    const { heading, children } = node
+
+    if (heading) {
+      const a = document.createElement('a')
+      a.dataset.headingIndex = String(heading.index)
+      a.textContent = heading.text
+      parent.appendChild(a)
+    }
+    if (children?.length) {
+      const ul = document.createElement('ul')
+      for (let index = 0; index < children.length; index++) {
+        const c = children[index]
+        const li = document.createElement('li')
+        appendHeadingNode(li, c)
+        ul.appendChild(li)
+      }
+      parent.appendChild(ul)
+    }
+  }
+
+  appendHeadingNode(fragment, headingTree)
+
+  dom.appendChild(fragment)
+
+  return () => {
+    if (dom) {
+      dom.innerHTML = ''
+    }
+  }
 }
 
 type HeadingNode = {
@@ -153,100 +206,27 @@ export const createToc = ({
   headingSelectors,
   appendPlaceholder = true,
   jumpOnClick = true,
+  highlightOnScroll = true,
 }: TocOptions) => {
   let content = extractContent(getElement(article))
   let dom: HTMLElement | undefined
 
   // derived states
   let measurements: Measurements | undefined
-  const ensureMeasurements = (content: Content) => {
+  const ensureMeasurements = (content: Content | undefined) => {
+    if (!content) {
+      return undefined
+    }
     if (!measurements) {
       measurements = measureContent(content)
     }
     return measurements
   }
-  let headingTree: HeadingNode | undefined
   let activeHeading = -1
-  let activeLIs = [] as HTMLElement[]
+  // let activeLIs = [] as HTMLElement[]
   const clearDerivedStates = () => {
     measurements = undefined
-    headingTree = undefined
     activeHeading = -1
-    activeLIs = []
-  }
-
-  const render = (dom: HTMLElement) => {
-    if (!content) {
-      return noop
-    }
-
-    const fragment = new DocumentFragment()
-    if (!headingTree) {
-      headingTree = toTree(content.headings)
-    }
-
-    const appendHeadingNode = (
-      parent: HTMLElement | DocumentFragment,
-      node: HeadingNode,
-    ) => {
-      const { heading, children } = node
-
-      if (heading) {
-        const a = document.createElement('a')
-        a.dataset.headingIndex = String(heading.index)
-        a.textContent = heading.text
-        parent.appendChild(a)
-      }
-      if (children?.length) {
-        const ul = document.createElement('ul')
-        for (let index = 0; index < children.length; index++) {
-          const c = children[index]
-          const li = document.createElement('li')
-          appendHeadingNode(li, c)
-          ul.appendChild(li)
-        }
-        parent.appendChild(ul)
-      }
-    }
-
-    appendHeadingNode(fragment, headingTree)
-
-    dom.appendChild(fragment)
-
-    updateActiveHeading()
-
-    return () => {
-      if (dom) {
-        dom.innerHTML = ''
-      }
-    }
-  }
-
-  const updateActiveHeading = () => {
-    const index = content
-      ? calcActiveHeading(
-          content,
-          ensureMeasurements(content),
-          gapFromScrollerTop,
-        )
-      : -1
-    if (index === activeHeading) {
-      return
-    }
-    activeHeading = index
-
-    if (dom) {
-      activeLIs.forEach((li) => li.classList.remove('active'))
-      let current = dom.querySelector(`[data-heading-index="${index}"]`)
-      while (current && current !== dom) {
-        if (current.tagName === 'LI') {
-          activeLIs.push(current as HTMLElement)
-          current.classList.add('active')
-        }
-        current = current.parentElement
-      }
-    }
-    instance.emit('activeHeadingChanged', index)
   }
 
   const instance = {
@@ -255,8 +235,10 @@ export const createToc = ({
       dom = el
 
       const { R, dispose } = createDisposer()
-      if (dom) {
-        R(render(dom))
+      if (dom && content) {
+        R(renderToc(dom, content))
+
+        // jump to active heading on click
         if (jumpOnClick) {
           R(
             listen(dom, 'click', (e) => {
@@ -271,12 +253,51 @@ export const createToc = ({
             }),
           )
         }
-        updateActiveHeading()
-      }
-      if (content) {
-        const emitter =
-          content.scroller === document.body ? window : content.scroller
-        R(listen(emitter, 'scroll', updateActiveHeading))
+
+        // highlight active heading on article scroll
+        if (dom && highlightOnScroll) {
+          let unhightlight = noop
+          const highlight = (index: number) => {
+            const { R, dispose } = createDisposer()
+            if (dom) {
+              let current = dom.querySelector(`[data-heading-index="${index}"]`)
+              while (current && current !== dom) {
+                if (current.tagName === 'LI') {
+                  R(addClass(current, 'active'))
+                }
+                current = current.parentElement
+              }
+
+              instance.emit('activeHeadingChanged', index)
+            }
+            return dispose
+          }
+
+          const emitter =
+            content.scroller === document.body ? window : content.scroller
+          R(
+            listen(emitter, 'scroll', () => {
+              const index = calcActiveHeading(
+                content,
+                ensureMeasurements(content),
+                gapFromScrollerTop,
+              )
+              if (index === activeHeading) {
+                return noop
+              }
+              activeHeading = index
+              unhightlight()
+              unhightlight = highlight(index)
+            }),
+          )
+          unhightlight = highlight(
+            calcActiveHeading(
+              content,
+              ensureMeasurements(content),
+              gapFromScrollerTop,
+            ),
+          )
+        }
       }
 
       return dispose

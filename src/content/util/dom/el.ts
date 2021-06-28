@@ -36,7 +36,7 @@ export function listen(
   }
 }
 
-export const addClass = (element: HTMLElement, className: string) => {
+export const addClass = (element: Element, className: string) => {
   element.classList.add(className)
   return () => {
     element.classList.remove(className)

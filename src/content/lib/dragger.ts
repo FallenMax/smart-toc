@@ -1,9 +1,7 @@
 import { createDisposer } from '../util/disposer'
-import { addCSS, removeCSS } from '../util/dom/css'
-import { addClass, listen } from '../util/dom/el'
+import { listen } from '../util/dom/el'
 import { createEventEmitter } from '../util/event'
 import { between } from '../util/math/between'
-import draggerCss from './dragger.css'
 
 type Drag = undefined | { startX: number; startY: number }
 
@@ -20,7 +18,6 @@ type Rect = {
   height: number
   width: number
 }
-const IS_DRAGGING_CLASS = 'smarttoc--is-dragging'
 
 type DraggableEvent = {
   dragStateChanged: undefined
@@ -102,7 +99,6 @@ export const createDragger = (options: DragOptions) => {
     setStartOffset({ ...currentOffset })
     mousedown.R(listen(document, 'mousemove', onMouseMove))
     mousedown.R(listen(document, 'mouseup', onMouseUp))
-    mousedown.R(addClass(document.documentElement, IS_DRAGGING_CLASS))
     mousedown.R(() => (drag = undefined))
     instance.emit('dragStateChanged')
   }
@@ -135,7 +131,6 @@ export const createDragger = (options: DragOptions) => {
     ...createEventEmitter<DraggableEvent>(),
 
     start() {
-      R(addCSS(draggerCss, 'smarttoc-dragger-css'))
       R(listen(handle, 'mousedown', onMouseDown))
       R(listen(window, 'resize', onResize))
 
