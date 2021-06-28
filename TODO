@@ -11,7 +11,7 @@ feature:
   ✔ draggable @done(21-06-26 19:24)
   ✔ remembers last drag position @done(21-06-26 21:52)
   ☐ scroll to active toc heading when out-of-view
-  ☐ choose best spot to place panel
-  ☐ auto-fold headings with level >2 if too many
-  ☐ reflect on article change
-  ☐ reflect on headings change
+  ✔ choose best spot to place panel @done(21-06-28 12:36)
+  ☐ auto-fold headings with level > 2 if too many
+  ☐ reflect on article change (including not exist)
+  ☐ reflect on headings change 

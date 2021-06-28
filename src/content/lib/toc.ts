@@ -305,11 +305,16 @@ export const createToc = ({
     getContent() {
       return content
     },
-    getMeasurements() {
-      if (content && !measurements) {
-        measurements = measureContent(content)
+    getMeasurements(forceMeature = false) {
+      if (content) {
+        if (!measurements || forceMeature) {
+          measurements = measureContent(content)
+        }
       }
       return measurements
+    },
+    getTopGap() {
+      return gapFromScrollerTop ?? 0
     },
 
     goToHeading(index: number) {

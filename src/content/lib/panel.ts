@@ -1,4 +1,4 @@
-import { Content } from '../types'
+import { Content, Rect } from '../types'
 import { createDisposer } from '../util/disposer'
 import { addCSS } from '../util/dom/css'
 import { appendChild, createElement } from '../util/dom/el'
@@ -14,8 +14,8 @@ let lastOffset: DragOffset = {
   y: 0,
 }
 
-const calcPlacement = (article): 'left' | 'right' => {
-  const { left, right } = article
+const selectBestPlacement = (articleRect: Rect): 'left' | 'right' => {
+  const { left, right } = articleRect
   const winWidth = window.innerWidth
   const panelMinWidth = 250
   const spaceRight = winWidth - right
@@ -24,6 +24,34 @@ const calcPlacement = (article): 'left' | 'right' => {
   return spaceRight < panelMinWidth + gap && spaceLeft > panelMinWidth + gap
     ? 'left'
     : 'right'
+}
+
+const updatePanelPlacement = ($panel: HTMLElement, toc: Toc) => {
+  const content = toc.getContent()
+  const measurements = toc.getMeasurements(true)
+  if (content && measurements) {
+    const placement = selectBestPlacement(measurements.articleRect)
+    const winWidth = window.innerWidth
+    const panelMinWidth = 250
+    const gap = 80
+    const { scroller } = content
+    const { articleRect, scrollerRect } = measurements
+    const { left, right } = articleRect
+
+    //-------------- x --------------
+    const x =
+      placement === 'left'
+        ? Math.max(0, left - gap - panelMinWidth) // place at left
+        : Math.min(right + gap, winWidth - panelMinWidth) // place at right
+
+    //-------------- y --------------
+    const scrollableTop = scroller === document.body ? 0 : scrollerRect.top
+    const y = scrollableTop + toc.getTopGap() + 50
+
+    $panel.style.left = `${x}px`
+    $panel.style.top = `${y}px`
+    $panel.style.maxHeight = `calc(100vh - ${y}px - 50px)`
+  }
 }
 
 /**
@@ -49,6 +77,8 @@ export const createTocPanel = ({
       R(addCSS(tocCss, 'smarttoc-toc-css'))
 
       const $panel = createElement('nav', 'smarttoc-panel')
+      $panel.style.visibility = 'none'
+
       R(appendChild(container, $panel))
 
       const $handle = createElement('div', 'smarttoc-handle')
@@ -82,6 +112,10 @@ export const createTocPanel = ({
 
       R(toc.on('contentChanged', useReadableMode))
       R(useReadableMode(toc.getContent()))
+
+      updatePanelPlacement($panel, toc)
+
+      $panel.style.visibility = 'auto'
       return dispose
     },
   }
