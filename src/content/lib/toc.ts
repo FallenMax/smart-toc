@@ -5,7 +5,7 @@ import {
   Measurements as Measurements,
 } from '../types'
 import { createDisposer } from '../util/disposer'
-import { addClass, listen } from '../util/dom/el'
+import { addClass, appendChild, listen } from '../util/dom/el'
 import {
   getScrollElement,
   getScrollTop,
@@ -86,6 +86,42 @@ const calcActiveHeading = (
   return m.headingRects.length - 1
 }
 
+const appendExtenderToArticle = (
+  content: Content,
+  measurements: Measurements,
+  topGap: number,
+) => {
+  const { article, scroller, headings } = content
+  const { articleRect, scrollerRect, headingRects } = measurements
+  const EXTENDER_ID = 'smarttoc-extender'
+  const { R, dispose } = createDisposer()
+  let extender: HTMLElement | null = scroller.querySelector('#' + EXTENDER_ID)
+  if (!extender) {
+    extender = document.createElement('div')
+    extender.id = EXTENDER_ID
+    R(appendChild(scroller, extender))
+  }
+  const extenderHeight = extender.offsetHeight
+
+  const bottomHeading = headingRects.sort((a, b) => b.bottom - a.bottom)[0]
+  if (!bottomHeading) {
+    return noop
+  }
+
+  const requiredExtenderHeight = Math.max(
+    0,
+    scrollerRect.bottom -
+      (scroller.dom.scrollHeight - extenderHeight) +
+      article.fromScrollerTop +
+      bottomHeading.fromArticleTop! -
+      (topGap + scrollerRect.top),
+  )
+
+  extender.style.height = requiredExtenderHeight + 'px'
+
+  return dispose
+}
+
 export type TocOptions = {
   /**
    * article element or elment id
@@ -111,12 +147,12 @@ export type TocOptions = {
   /**
    * insert an empty div at the end of article
    *
-   * this is to ensure that we can scroll to last heading, even if last paragraph is not tall enough,
+   * this div extends article to ensure that we can scroll to last heading, in case last paragraph is not tall enough,
    * the placeholder will be removed when toc is destroyed
    *
    * @default true
    */
-  appendPlaceholder?: boolean
+  appendExtender?: boolean
 
   /**
    * jump to clicked heading
@@ -204,7 +240,7 @@ export const createToc = ({
   article = extractArticle(),
   gapFromScrollerTop,
   headingSelectors,
-  appendPlaceholder = true,
+  appendExtender = true,
   jumpOnClick = true,
   highlightOnScroll = true,
 }: TocOptions) => {
@@ -213,21 +249,13 @@ export const createToc = ({
 
   // derived states
   let measurements: Measurements | undefined
-  const ensureMeasurements = (content: Content | undefined) => {
-    if (!content) {
-      return undefined
-    }
+  function ensureMeasurements(content: Content) {
     if (!measurements) {
       measurements = measureContent(content)
     }
     return measurements
   }
   let activeHeading = -1
-  // let activeLIs = [] as HTMLElement[]
-  const clearDerivedStates = () => {
-    measurements = undefined
-    activeHeading = -1
-  }
 
   const instance = {
     ...createEventEmitter<TocEvent>(),
@@ -235,69 +263,81 @@ export const createToc = ({
       dom = el
 
       const { R, dispose } = createDisposer()
+
       if (dom && content) {
         R(renderToc(dom, content))
+      }
 
-        // jump to active heading on click
-        if (jumpOnClick) {
-          R(
-            listen(dom, 'click', (e) => {
-              const target = e.target as HTMLElement
-              const index = Number(target?.dataset.headingIndex)
-              if (Number.isNaN(index)) {
-                return
-              }
-              if (jumpOnClick) {
-                scrollToHeading(content, index, gapFromScrollerTop)
-              }
-            }),
+      if (appendExtender) {
+        if (content) {
+          appendExtenderToArticle(
+            content,
+            ensureMeasurements(content),
+            gapFromScrollerTop ?? 0,
           )
         }
+      }
 
-        // highlight active heading on article scroll
-        if (dom && highlightOnScroll) {
-          let unhightlight = noop
-          const highlight = (index: number) => {
-            const { R, dispose } = createDisposer()
-            if (dom) {
-              let current = dom.querySelector(`[data-heading-index="${index}"]`)
-              while (current && current !== dom) {
-                if (current.tagName === 'LI') {
-                  R(addClass(current, 'active'))
-                }
-                current = current.parentElement
-              }
-
-              instance.emit('activeHeadingChanged', index)
+      // jump to active heading on click
+      if (dom && jumpOnClick) {
+        R(
+          listen(dom, 'click', (e) => {
+            const target = e.target as HTMLElement
+            const index = Number(target?.dataset.headingIndex)
+            if (Number.isNaN(index)) {
+              return
             }
-            return dispose
-          }
+            if (jumpOnClick) {
+              scrollToHeading(content, index, gapFromScrollerTop)
+            }
+          }),
+        )
+      }
 
-          const emitter =
-            content.scroller === document.body ? window : content.scroller
-          R(
-            listen(emitter, 'scroll', () => {
-              const index = calcActiveHeading(
-                content,
-                ensureMeasurements(content),
-                gapFromScrollerTop,
-              )
-              if (index === activeHeading) {
-                return noop
+      // highlight active heading on article scroll
+      if (dom && content && highlightOnScroll) {
+        let unhightlight = noop
+        const highlight = (index: number) => {
+          const { R, dispose } = createDisposer()
+          if (dom) {
+            let current = dom.querySelector(`[data-heading-index="${index}"]`)
+            while (current && current !== dom) {
+              if (current.tagName === 'LI') {
+                R(addClass(current, 'active'))
               }
-              activeHeading = index
-              unhightlight()
-              unhightlight = highlight(index)
-            }),
-          )
-          unhightlight = highlight(
-            calcActiveHeading(
-              content,
-              ensureMeasurements(content),
-              gapFromScrollerTop,
-            ),
-          )
+              current = current.parentElement
+            }
+
+            instance.emit('activeHeadingChanged', index)
+          }
+          return dispose
         }
+        const emitter =
+          content.scroller === document.body ? window : content.scroller
+        R(
+          listen(emitter, 'scroll', () => {
+            const index = content
+              ? calcActiveHeading(
+                  content,
+                  ensureMeasurements(content),
+                  gapFromScrollerTop,
+                )
+              : -1
+            if (index === activeHeading) {
+              return noop
+            }
+            activeHeading = index
+            unhightlight()
+            unhightlight = highlight(index)
+          }),
+        )
+        unhightlight = highlight(
+          calcActiveHeading(
+            content,
+            ensureMeasurements(content),
+            gapFromScrollerTop,
+          ),
+        )
       }
 
       return dispose

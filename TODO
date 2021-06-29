@@ -6,6 +6,7 @@ api:
   ☐ toc-vue
   
 feature:
+  ☐ append placeholder
   ☐ topbar height auto-measure
   ✔ readable mode @done(21-06-26 21:22)
   ✔ draggable @done(21-06-26 19:24)
