@@ -1,4 +1,4 @@
-import { createDisposer } from '../util/disposer'
+import { createDisposer, Disposable } from '../util/disposer'
 import { listen } from '../util/dom/el'
 import { createEventEmitter } from '../util/event'
 import { between } from '../util/math/between'
@@ -80,7 +80,7 @@ export const createDragger = (options: DragOptions) => {
     }
   }
 
-  const mousedown = createDisposer()
+  let mousedownDispose: Disposable | undefined
   const onMouseDown = (e: MouseEvent) => {
     const target = e.target as HTMLElement
     if (
@@ -97,9 +97,10 @@ export const createDragger = (options: DragOptions) => {
 
     originalRect = getOriginalRect(true)!
     setStartOffset({ ...currentOffset })
-    mousedown.R(listen(document, 'mousemove', onMouseMove))
-    mousedown.R(listen(document, 'mouseup', onMouseUp))
-    mousedown.R(() => (drag = undefined))
+    mousedownDispose = createDisposer()
+    mousedownDispose.R(listen(document, 'mousemove', onMouseMove))
+    mousedownDispose.R(listen(document, 'mouseup', onMouseUp))
+    mousedownDispose.R(() => (drag = undefined))
     instance.emit('dragStateChanged')
   }
   const onMouseMove = (e: MouseEvent) => {
@@ -114,7 +115,8 @@ export const createDragger = (options: DragOptions) => {
   }
   const onMouseUp = () => {
     setStartOffset({ ...currentOffset })
-    mousedown.dispose()
+    mousedownDispose?.dispose()
+    mousedownDispose = undefined
     instance.emit('dragStateChanged')
   }
 

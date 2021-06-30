@@ -34,7 +34,6 @@ const updatePanelPlacement = ($panel: HTMLElement, toc: Toc) => {
     const winWidth = window.innerWidth
     const panelMinWidth = 250
     const gap = 80
-    const { scroller } = content
     const { articleRect, scrollerRect } = measurements
     const { left, right } = articleRect
 
@@ -45,8 +44,8 @@ const updatePanelPlacement = ($panel: HTMLElement, toc: Toc) => {
         : Math.min(right + gap, winWidth - panelMinWidth) // place at right
 
     //-------------- y --------------
-    const scrollableTop = scroller === document.body ? 0 : scrollerRect.top
-    const y = scrollableTop + toc.getTopGap() + 50
+    const scrollableTop = scrollerRect.top
+    const y = scrollableTop + toc.getTopMargin() + 50
 
     $panel.style.left = `${x}px`
     $panel.style.top = `${y}px`

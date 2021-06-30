@@ -30,10 +30,11 @@ export interface Content {
 }
 
 export type Measurements = {
-  articleRect: DOMRect
-  scrollerRect: DOMRect
+  articleRect: Rect
+  scrollerRect: Rect
+  /** scroll position when measured  */
   scrollY: number
-  headingRects: DOMRect[]
+  headingRects: Rect[]
 }
 
 export interface Offset {

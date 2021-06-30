@@ -14,5 +14,5 @@ feature:
   ☐ scroll to active toc heading when out-of-view
   ✔ choose best spot to place panel @done(21-06-28 12:36)
   ☐ auto-fold headings with level > 2 if too many
-  ☐ reflect on article change (including not exist)
-  ☐ reflect on headings change 
+  ☐ reflect on article change (including change to not exist)
+  ☐ reflect on headings and/or position change  

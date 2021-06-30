@@ -73,19 +73,19 @@ const WEIGHTS_BY_SELECTOR_DISTANCE: { [Selector: string]: number[] } = {
  *
  * Here is the idea:
  * An article element X should contain lots of child/grandchild elements like h2, h3, h4...
- * these elements contributes to the probabilty of "X is the article element".
+ * these elements contributes to the probability of "X is the article element".
  *
  * At the same time, elements like nav, sidebar, aside negatively contributes. If an element X contains any of these
  * elements, X is unlikely to be article element, the real article is perhaps deep down in X's descendants, or somewhere else.
  *
  * Note that their amount of contribution (we call score) should vary by distance: the further down they are from X, the less contribution X get.
- * This allows nearer and more relevant candicates win the race, or we will always ends with document.documentElement.
+ * This allows nearer and more relevant candidates win the race, or we will always ends with document.documentElement.
  *
  * So here we look at every meaningful elements like h1, h2, h3 and negative elements like .sidebar, nav, .comment, count scores of their
  * ancestors, the one who get most points wins.
  */
 export const extractArticle = (): HTMLElement | undefined => {
-  /** candicate scores */
+  /** candidate scores */
   const scores = new Map<HTMLElement, number>()
 
   // weigh nodes by factor: "selector" "distance from this node"
@@ -112,14 +112,14 @@ export const extractArticle = (): HTMLElement | undefined => {
       })
     })
   })
-  const candicatesAll = [...scores]
+  const candidatesAll = [...scores]
     .map(([elem, score]) => {
       return { elem, score }
     })
     .sort((a, b) => b.score - a.score)
 
   // pick top 5 nodes and adjust with additional factors
-  const candicates = candicatesAll
+  const candidates = candidatesAll
     .slice(0, 5)
     .filter(Boolean)
     .map(({ elem, score }) => {
@@ -148,16 +148,16 @@ export const extractArticle = (): HTMLElement | undefined => {
       }
     })
 
-  // propagate punishement of being narrow
-  candicates.forEach((child) => {
-    candicates.forEach((parent) => {
+  // propagate punishment of being narrow
+  candidates.forEach((child) => {
+    candidates.forEach((parent) => {
       if (parent.elem.contains(child.elem)) {
         parent.factors.widthFromChildren *= child.factors.width
       }
     })
   })
 
-  const finalCandicates = candicates.map((c) => {
+  const finalCandidates = candidates.map((c) => {
     const f = c.factors
     const finalScore =
       c.score *
@@ -168,19 +168,19 @@ export const extractArticle = (): HTMLElement | undefined => {
       f.widthFromChildren
     return { ...c, finalScore }
   })
-  finalCandicates.sort((a, b) => b.finalScore - a.finalScore)
+  finalCandidates.sort((a, b) => b.finalScore - a.finalScore)
 
-  const article = finalCandicates[0].elem
+  const article = finalCandidates[0].elem
 
   if (isDebugging) {
     logger.info('[extract] extractArticle', {
       scores,
-      candicatesAll,
-      finalCandicates,
+      candidatesAll,
+      finalCandidates,
     })
     highlight(article, 'red')
     logger.table(
-      finalCandicates.map((c) => ({
+      finalCandidates.map((c) => ({
         elem: c.elem,
         score: c.score,
         ...c.factors,

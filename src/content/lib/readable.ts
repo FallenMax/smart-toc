@@ -2,8 +2,6 @@ import { Content } from '../types'
 import { fromPx, setStyle, toPx } from '../util/dom/css'
 import { between } from '../util/math/between'
 
-const EXTENDER_ID = 'smarttoc-extender'
-
 export const enterReadable = (content: Content) => {
   const { article } = content
   const computed = window.getComputedStyle(article)

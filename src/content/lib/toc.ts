@@ -1,11 +1,6 @@
-import {
-  Article,
-  Content,
-  Heading,
-  Measurements as Measurements,
-} from '../types'
+import { Article, Content, Heading, Measurements, Rect } from '../types'
 import { createDisposer } from '../util/disposer'
-import { addClass, appendChild, listen } from '../util/dom/el'
+import { addClass, appendChild, createElement, listen } from '../util/dom/el'
 import {
   getScrollElement,
   getScrollTop,
@@ -15,33 +10,26 @@ import { createEventEmitter } from '../util/event'
 import { noop } from '../util/noop'
 import { extractArticle, extractHeadings, toTree } from './extract'
 
-const scrollToHeading = (
-  content: Content | undefined,
-  index: number,
-  gapFromScrollerTop: number | undefined,
-) => {
-  if (!content) {
-    return
-  }
-  const { scroller, headings } = content
-  const heading = headings[index]
-  if (heading) {
-    smoothScroll({
-      target: heading.dom,
-      scroller: scroller,
-      topMargin: gapFromScrollerTop ?? 0 + 10, // TODO measure topBar
-      onFinish() {
-        // TODO measure
-        // $triggerTopbarMeasure(heading.dom)
-      },
-    })
-  }
-}
+const DEFAULT_TOP_MARGIN = 10
 
-const measureContent = (content: Content) => {
+const measureContent = (content: Content): Measurements => {
+  let scrollerRect: Rect = content.scroller.getBoundingClientRect()
+  if (
+    content.scroller === document.body ||
+    content.scroller === document.documentElement
+  ) {
+    scrollerRect = {
+      top: 0,
+      left: 0,
+      right: window.innerWidth,
+      bottom: window.innerHeight,
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }
+  }
   return {
     articleRect: content.article.getBoundingClientRect(),
-    scrollerRect: content.scroller.getBoundingClientRect(),
+    scrollerRect,
     scrollY: getScrollTop(content.scroller),
     headingRects: content.headings.map((h) => h.dom.getBoundingClientRect()),
   }
@@ -60,10 +48,33 @@ const extractContent = (article: Article | undefined) => {
   }
 }
 
+const scrollToHeading = (
+  content: Content | undefined,
+  index: number,
+  topMargin: number,
+) => {
+  if (!content) {
+    return
+  }
+  const { scroller, headings } = content
+  const heading = headings[index]
+  if (heading) {
+    smoothScroll({
+      target: heading.dom,
+      scroller: scroller,
+      topMargin: topMargin,
+      onFinish() {
+        // TODO measure
+        // $triggerTopbarMeasure(heading.dom)
+      },
+    })
+  }
+}
+
 const calcActiveHeading = (
   content: Content | undefined,
   measurements: Measurements | undefined,
-  gapFromScrollerTop?: number,
+  topMargin = DEFAULT_TOP_MARGIN,
 ) => {
   if (!content || !measurements) {
     return -1
@@ -71,15 +82,13 @@ const calcActiveHeading = (
   const { scroller } = content
   const m = measurements
 
-  const visibleAreaTop = Math.max(gapFromScrollerTop ?? 0, m.scrollerRect.top)
+  const headingStart = topMargin + m.scrollerRect.top
   const scrollY = getScrollTop(scroller)
 
   for (let i = 0; i < m.headingRects.length; i++) {
     const rect = m.headingRects[i]
     let top = rect.top + m.scrollY - scrollY
-    const isCompletelyVisible = top >= visibleAreaTop + 15
-    if (isCompletelyVisible) {
-      // the 'nearly-visible' heading is the current heading
+    if (top > headingStart) {
       return Math.max(0, i - 1)
     }
   }
@@ -92,31 +101,31 @@ const appendExtenderToArticle = (
   topGap: number,
 ) => {
   const { article, scroller, headings } = content
-  const { articleRect, scrollerRect, headingRects } = measurements
-  const EXTENDER_ID = 'smarttoc-extender'
+  const { articleRect, scrollerRect, headingRects, scrollY } = measurements
   const { R, dispose } = createDisposer()
-  let extender: HTMLElement | null = scroller.querySelector('#' + EXTENDER_ID)
-  if (!extender) {
-    extender = document.createElement('div')
-    extender.id = EXTENDER_ID
-    R(appendChild(scroller, extender))
-  }
-  const extenderHeight = extender.offsetHeight
 
-  const bottomHeading = headingRects.sort((a, b) => b.bottom - a.bottom)[0]
-  if (!bottomHeading) {
-    return noop
+  const bottom = headingRects.sort((a, b) => b.bottom - a.bottom)[0]?.bottom
+  if (bottom == null) {
+    return dispose
   }
+
+  const expectedYWhenScrolled = scrollerRect.top + topGap
+  const actualYWhenScrolled =
+    scrollerRect.bottom - (articleRect.bottom - bottom) // TODO consider scroller padding etc
 
   const requiredExtenderHeight = Math.max(
     0,
-    scrollerRect.bottom -
-      (scroller.dom.scrollHeight - extenderHeight) +
-      article.fromScrollerTop +
-      bottomHeading.fromArticleTop! -
-      (topGap + scrollerRect.top),
+    actualYWhenScrolled - expectedYWhenScrolled,
   )
 
+  console.log(`🚀 > expectedYWhenScrolled`, {
+    expectedYWhenScrolled,
+    actualYWhenScrolled,
+    requiredExtenderHeight,
+  })
+
+  const extender = createElement('div', 'smarttoc-extender')
+  R(appendChild(scroller, extender))
   extender.style.height = requiredExtenderHeight + 'px'
 
   return dispose
@@ -124,7 +133,7 @@ const appendExtenderToArticle = (
 
 export type TocOptions = {
   /**
-   * article element or elment id
+   * article element or element id
    *
    * if not provided, article will be auto-detected from page (not guaranteed to be correct)
    */
@@ -139,11 +148,8 @@ export type TocOptions = {
   headingSelectors?: string[]
   /**
    * when scrolling article to reveal a heading, how much top space to preserve
-   *
-   * this helps avoid heading being covered by UI elements like sticky header).
-   * if not provided, this will be detected up first heading change
    */
-  gapFromScrollerTop?: number
+  topMargin?: number
   /**
    * insert an empty div at the end of article
    *
@@ -238,7 +244,7 @@ type HeadingNode = {
  */
 export const createToc = ({
   article = extractArticle(),
-  gapFromScrollerTop,
+  topMargin = DEFAULT_TOP_MARGIN,
   headingSelectors,
   appendExtender = true,
   jumpOnClick = true,
@@ -270,10 +276,12 @@ export const createToc = ({
 
       if (appendExtender) {
         if (content) {
-          appendExtenderToArticle(
-            content,
-            ensureMeasurements(content),
-            gapFromScrollerTop ?? 0,
+          R(
+            appendExtenderToArticle(
+              content,
+              ensureMeasurements(content),
+              topMargin,
+            ),
           )
         }
       }
@@ -288,7 +296,7 @@ export const createToc = ({
               return
             }
             if (jumpOnClick) {
-              scrollToHeading(content, index, gapFromScrollerTop)
+              scrollToHeading(content, index, topMargin)
             }
           }),
         )
@@ -320,7 +328,7 @@ export const createToc = ({
               ? calcActiveHeading(
                   content,
                   ensureMeasurements(content),
-                  gapFromScrollerTop,
+                  topMargin,
                 )
               : -1
             if (index === activeHeading) {
@@ -332,11 +340,7 @@ export const createToc = ({
           }),
         )
         unhightlight = highlight(
-          calcActiveHeading(
-            content,
-            ensureMeasurements(content),
-            gapFromScrollerTop,
-          ),
+          calcActiveHeading(content, ensureMeasurements(content), topMargin),
         )
       }
 
@@ -345,20 +349,20 @@ export const createToc = ({
     getContent() {
       return content
     },
-    getMeasurements(forceMeature = false) {
+    getMeasurements(forceMeasure = false) {
       if (content) {
-        if (!measurements || forceMeature) {
+        if (!measurements || forceMeasure) {
           measurements = measureContent(content)
         }
       }
       return measurements
     },
-    getTopGap() {
-      return gapFromScrollerTop ?? 0
+    getTopMargin() {
+      return topMargin
     },
 
     goToHeading(index: number) {
-      scrollToHeading(content, index, gapFromScrollerTop)
+      scrollToHeading(content, index, topMargin)
     },
     goToNextHeading() {
       if (!content || activeHeading === -1) {
