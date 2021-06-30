@@ -1,6 +1,9 @@
 import { Article, Content, Heading, Measurements, Rect } from '../types'
+import { debounce } from '../util/async/debounce'
 import { createDisposer } from '../util/disposer'
 import { addClass, appendChild, createElement, listen } from '../util/dom/el'
+import { listenMutation } from '../util/dom/mutation_observer'
+import { listenResize } from '../util/dom/resize_observer'
 import {
   getScrollElement,
   getScrollTop,
@@ -8,6 +11,7 @@ import {
 } from '../util/dom/scroll'
 import { createEventEmitter } from '../util/event'
 import { noop } from '../util/noop'
+import { isDeepEqual } from '../util/object/deep_equal'
 import { extractArticle, extractHeadings, toTree } from './extract'
 
 const DEFAULT_TOP_MARGIN = 10
@@ -49,7 +53,7 @@ const extractContent = (article: Article | undefined) => {
 }
 
 const scrollToHeading = (
-  content: Content | undefined,
+  content: Content,
   index: number,
   topMargin: number,
 ) => {
@@ -72,9 +76,9 @@ const scrollToHeading = (
 }
 
 const calcActiveHeading = (
-  content: Content | undefined,
-  measurements: Measurements | undefined,
-  topMargin = DEFAULT_TOP_MARGIN,
+  content: Content,
+  measurements: Measurements,
+  topMargin: number,
 ) => {
   if (!content || !measurements) {
     return -1
@@ -88,14 +92,15 @@ const calcActiveHeading = (
   for (let i = 0; i < m.headingRects.length; i++) {
     const rect = m.headingRects[i]
     let top = rect.top + m.scrollY - scrollY
-    if (top > headingStart) {
+    if (top > headingStart + 1) {
+      // +1 pixel to prevent calcActiveHeading() !== index, caused by rounding error
       return Math.max(0, i - 1)
     }
   }
   return m.headingRects.length - 1
 }
 
-const appendExtenderToArticle = (
+const updateExtender = (
   content: Content,
   measurements: Measurements,
   topGap: number,
@@ -109,6 +114,9 @@ const appendExtenderToArticle = (
     return dispose
   }
 
+  let extender = document.querySelector('smarttoc-extender') as HTMLElement
+  let extenderHeight = extender ? extender.offsetHeight : 0
+
   const expectedYWhenScrolled = scrollerRect.top + topGap
   const actualYWhenScrolled =
     scrollerRect.bottom - (articleRect.bottom - bottom) // TODO consider scroller padding etc
@@ -118,14 +126,11 @@ const appendExtenderToArticle = (
     actualYWhenScrolled - expectedYWhenScrolled,
   )
 
-  console.log(`🚀 > expectedYWhenScrolled`, {
-    expectedYWhenScrolled,
-    actualYWhenScrolled,
-    requiredExtenderHeight,
-  })
-
-  const extender = createElement('div', 'smarttoc-extender')
-  R(appendChild(scroller, extender))
+  if (!extender) {
+    createElement('div', 'smarttoc-extender')
+    const extender = createElement('div', 'smarttoc-extender')
+    R(appendChild(scroller, extender))
+  }
   extender.style.height = requiredExtenderHeight + 'px'
 
   return dispose
@@ -263,6 +268,34 @@ export const createToc = ({
   }
   let activeHeading = -1
 
+  let unhightlight = noop
+  const highlight = (index: number) => {
+    const { R, dispose } = createDisposer()
+    if (dom) {
+      let current = dom.querySelector(`[data-heading-index="${index}"]`)
+      while (current && current !== dom) {
+        if (current.tagName === 'LI') {
+          R(addClass(current, 'active'))
+        }
+        current = current.parentElement
+      }
+
+      instance.emit('activeHeadingChanged', index)
+    }
+    return dispose
+  }
+  const updateActiveHeading = () => {
+    const index = content
+      ? calcActiveHeading(content, ensureMeasurements(content), topMargin)
+      : -1
+    if (index === activeHeading) {
+      return
+    }
+    activeHeading = index
+    unhightlight()
+    unhightlight = highlight(index)
+  }
+
   const instance = {
     ...createEventEmitter<TocEvent>(),
     start(el?: HTMLElement) {
@@ -270,19 +303,10 @@ export const createToc = ({
 
       const { R, dispose } = createDisposer()
 
-      if (dom && content) {
-        R(renderToc(dom, content))
-      }
-
+      // append extender
       if (appendExtender) {
         if (content) {
-          R(
-            appendExtenderToArticle(
-              content,
-              ensureMeasurements(content),
-              topMargin,
-            ),
-          )
+          R(updateExtender(content, ensureMeasurements(content), topMargin))
         }
       }
 
@@ -295,7 +319,7 @@ export const createToc = ({
             if (Number.isNaN(index)) {
               return
             }
-            if (jumpOnClick) {
+            if (jumpOnClick && content) {
               scrollToHeading(content, index, topMargin)
             }
           }),
@@ -304,44 +328,40 @@ export const createToc = ({
 
       // highlight active heading on article scroll
       if (dom && content && highlightOnScroll) {
-        let unhightlight = noop
-        const highlight = (index: number) => {
-          const { R, dispose } = createDisposer()
-          if (dom) {
-            let current = dom.querySelector(`[data-heading-index="${index}"]`)
-            while (current && current !== dom) {
-              if (current.tagName === 'LI') {
-                R(addClass(current, 'active'))
-              }
-              current = current.parentElement
-            }
-
-            instance.emit('activeHeadingChanged', index)
-          }
-          return dispose
-        }
         const emitter =
           content.scroller === document.body ? window : content.scroller
-        R(
-          listen(emitter, 'scroll', () => {
-            const index = content
-              ? calcActiveHeading(
-                  content,
-                  ensureMeasurements(content),
-                  topMargin,
-                )
-              : -1
-            if (index === activeHeading) {
-              return noop
+        R(listen(emitter, 'scroll', updateActiveHeading))
+      }
+
+      // reflect on article/headings layout change
+      if (content) {
+        const updateContent = debounce(
+          () => {
+            console.log('update')
+            const nextContent = extractContent(getElement(article))
+            if (!isDeepEqual(content, nextContent)) {
+              content = nextContent
+              instance.emit('contentChanged', content)
             }
-            activeHeading = index
-            unhightlight()
-            unhightlight = highlight(index)
-          }),
+
+            measurements = content && measureContent(content)
+            if (highlightOnScroll) {
+              updateActiveHeading()
+            }
+          },
+          { delay: 100 },
         )
-        unhightlight = highlight(
-          calcActiveHeading(content, ensureMeasurements(content), topMargin),
-        )
+        R(listenResize(content.scroller, updateContent))
+        R(listenResize(content.article, updateContent))
+        R(listenMutation(content.article, updateContent))
+      }
+
+      // render toc
+      if (dom && content) {
+        R(renderToc(dom, content))
+        if (highlightOnScroll) {
+          updateActiveHeading()
+        }
       }
 
       return dispose
@@ -362,7 +382,9 @@ export const createToc = ({
     },
 
     goToHeading(index: number) {
-      scrollToHeading(content, index, topMargin)
+      if (content) {
+        scrollToHeading(content, index, topMargin)
+      }
     },
     goToNextHeading() {
       if (!content || activeHeading === -1) {

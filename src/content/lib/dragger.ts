@@ -122,7 +122,7 @@ export const createDragger = (options: DragOptions) => {
 
   const onResize = () => {
     let { x, y } = currentOffset
-    const offset = getBoundedOffset(x, y)
+    const offset = getBoundedOffset(x, y, true)
     setCurrentOffset(offset)
     setStartOffset(offset)
   }
