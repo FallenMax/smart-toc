@@ -231,6 +231,24 @@ const renderToc = (dom: HTMLElement, content: Content) => {
   }
 }
 
+let unhighlight = noop
+const highlight = (dom: HTMLElement, index: number) => {
+  unhighlight()
+  const { R, dispose } = createDisposer()
+  if (dom) {
+    let current = dom.querySelector(`[data-heading-index="${index}"]`)
+    while (current && current !== dom) {
+      if (current.tagName === 'LI') {
+        R(addClass(current, 'active'))
+      }
+      current = current.parentElement
+    }
+
+    // instance.emit('activeHeadingChanged', index)
+  }
+  unhighlight = dispose
+}
+
 type HeadingNode = {
   heading?: Heading | undefined
   children?: HeadingNode[]
@@ -247,14 +265,15 @@ type HeadingNode = {
  * - emit event
  *   - article/heading/scroller change
  */
-export const createToc = ({
-  article = extractArticle(),
-  topMargin = DEFAULT_TOP_MARGIN,
-  headingSelectors,
-  appendExtender = true,
-  jumpOnClick = true,
-  highlightOnScroll = true,
-}: TocOptions) => {
+export const createToc = (options: TocOptions) => {
+  let {
+    article = extractArticle(),
+    topMargin = DEFAULT_TOP_MARGIN,
+    headingSelectors,
+    appendExtender = true,
+    jumpOnClick = true,
+    highlightOnScroll = true,
+  } = options
   let content = extractContent(getElement(article))
   let dom: HTMLElement | undefined
 
@@ -268,22 +287,6 @@ export const createToc = ({
   }
   let activeHeading = -1
 
-  let unhightlight = noop
-  const highlight = (index: number) => {
-    const { R, dispose } = createDisposer()
-    if (dom) {
-      let current = dom.querySelector(`[data-heading-index="${index}"]`)
-      while (current && current !== dom) {
-        if (current.tagName === 'LI') {
-          R(addClass(current, 'active'))
-        }
-        current = current.parentElement
-      }
-
-      instance.emit('activeHeadingChanged', index)
-    }
-    return dispose
-  }
   const updateActiveHeading = () => {
     const index = content
       ? calcActiveHeading(content, ensureMeasurements(content), topMargin)
@@ -292,12 +295,12 @@ export const createToc = ({
       return
     }
     activeHeading = index
-    unhightlight()
-    unhightlight = highlight(index)
+    highlight(dom, index)
   }
 
   const instance = {
     ...createEventEmitter<TocEvent>(),
+    setOptions(options: Partial<TocOptions>) {},
     start(el?: HTMLElement) {
       dom = el
 
