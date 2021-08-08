@@ -1,3 +1,4 @@
+import { assert } from './assert'
 import { isDebugging } from './env'
 import { createLogger } from './logger'
 
@@ -19,74 +20,59 @@ interface StreamCallable<T extends VV> {
   (): T
 }
 
-let streamId = 0
-const generateStreamName = (id: number) => {
-  return `s_${id}`
+type StreamTuple<T extends VV[]> = {
+  // here tsc complains T[K] does not extends VV, but we know it should
+  // - changing to `T[K] extends VV ?  Stream<T[K]> : never` fixes this error, but introduces further problems
+  // @ts-ignore
+  [K in keyof T]: Stream<T[K]>
 }
+
+let nextId = 0
 
 class StreamClass<T extends VV> {
   public displayName?: string
-  private id!: number
   private listeners: StreamListener<T>[] = []
   private dependents: StreamDependent<T>[] = []
   private value: T | undefined = undefined
   private changed: boolean = false
-  private constructor() {}
+  private constructor(value: T | undefined, name?: string) {
+    this.displayName = name || `s_${nextId++}`
+    this.value = value
+  }
 
   static isStream(o: any): o is Stream {
     return o && typeof o.subscribe === 'function'
   }
 
   static create<T extends VV>(init?: T | undefined, name?: string): Stream<T> {
-    const stream$ = function(val?: T) {
+    const instance = new StreamClass<T>(init, name)
+
+    const callable = function (val) {
       if (arguments.length === 0) {
         return stream$.value
       } else {
-        if (typeof val === 'undefined') {
-          if (isDebugging) {
-            debugger
-          }
-          throw new Error('stream() value should not be undefined')
-        }
+        assert(
+          typeof val !== 'undefined',
+          'sending `undefined` to a stream is not allowed',
+        )
         stream$.update(val)
         stream$.flush()
       }
-    } as Stream<T>
-    stream$.id = streamId++
-    stream$.displayName = name || generateStreamName(stream$.id)
-    stream$.value = init
-    stream$.changed = false
-    stream$.listeners = []
-    stream$.dependents = []
+    } as StreamCallable<T>
+
+    const stream$ = Object.assign(callable, instance)
+
     Object.setPrototypeOf(stream$, StreamClass.prototype)
+
     return stream$
   }
 
-  static combine<T1 extends VV>(streams: [Stream<T1>]): Stream<[T1]>
-  static combine<T1 extends VV, T2 extends VV>(
-    streams: [Stream<T1>, Stream<T2>],
-  ): Stream<[T1, T2]>
-  static combine<T1 extends VV, T2 extends VV, T3 extends VV>(
-    streams: [Stream<T1>, Stream<T2>, Stream<T3>],
-  ): Stream<[T1, T2, T3]>
-  static combine<T1 extends VV, T2 extends VV, T3 extends VV, T4 extends VV>(
-    streams: [Stream<T1>, Stream<T2>, Stream<T3>, Stream<T4>],
-  ): Stream<[T1, T2, T3, T4]>
-  static combine<
-    T1 extends VV,
-    T2 extends VV,
-    T3 extends VV,
-    T4 extends VV,
-    T5 extends VV
-  >(
-    streams: [Stream<T1>, Stream<T2>, Stream<T3>, Stream<T4>, Stream<T5>],
-  ): Stream<[T1, T2, T3, T4, T5]>
-  static combine(streams: Stream<any>[]): Stream<any> {
-    const cached = streams.map((stream$) => stream$())
+  static combine<T extends VV[]>(...streams: [...StreamTuple<T>]): Stream<T> {
+    const cached = streams.map((stream$) => stream$()) as T // could be undefined thought
     const allHasValue = () =>
       cached.every((elem) => typeof elem !== 'undefined')
 
-    const combined$ = Stream(
+    const combined$ = Stream<T>(
       allHasValue() ? cached : undefined,
       `combine(${streams.map((s) => s.displayName).join(',')})`,
     )
@@ -107,26 +93,9 @@ class StreamClass<T extends VV> {
     return combined$
   }
 
-  static merge<A extends VV>(streams: [Stream<A>]): Stream<A>
-  static merge<A extends VV, B extends VV>(
-    streams: [Stream<A>, Stream<B>],
-  ): Stream<A | B>
-  static merge<A extends VV, B extends VV, C extends VV>(
-    streams: [Stream<A>, Stream<B>, Stream<C>],
-  ): Stream<A | B | C>
-  static merge<A extends VV, B extends VV, C extends VV, D extends VV>(
-    streams: [Stream<A>, Stream<B>, Stream<C>, Stream<D>],
-  ): Stream<A | B | C | D>
-  static merge<
-    A extends VV,
-    B extends VV,
-    C extends VV,
-    D extends VV,
-    E extends VV
-  >(
-    streams: [Stream<A>, Stream<B>, Stream<C>, Stream<D>, Stream<E>],
-  ): Stream<A | B | C | D | E>
-  static merge(streams: Stream<any>[]): Stream<any> {
+  static merge<T extends VV[]>(
+    ...streams: [...StreamTuple<T>]
+  ): Stream<T[number]> {
     const merged$ = Stream(
       undefined,
       `merge(${streams.map((s) => s.displayName).join(',')})`,
@@ -195,8 +164,8 @@ class StreamClass<T extends VV> {
   }
 
   startsWith<S extends VV>(value: S): Stream<S | T> {
-    const start$ = Stream(value)
-    return Stream.merge([start$, (this as any) as Stream<T>])
+    const start$ = Stream<S>(value)
+    return Stream.merge(start$, this.asStream())
   }
 
   subscribe(listener: StreamListener<T>, emitCurrent = true): () => void {
@@ -297,7 +266,7 @@ class StreamClass<T extends VV> {
     let timer: number
     this.subscribe((val) => {
       clearTimeout(timer)
-      timer = window.setTimeout(function() {
+      timer = window.setTimeout(function () {
         debounced$(val)
       }, delay)
     })
@@ -363,17 +332,25 @@ class StreamClass<T extends VV> {
       this.dependents.forEach((dep) => dep.flushDependent())
     }
   }
+
+  private asStream(): Stream<T> {
+    assert(typeof this === 'function', 'not callable Stream')
+    return this as unknown as Stream<T>
+  }
 }
 
-export type Stream<T extends VV = any> = StreamClass<T> & StreamCallable<T>
+export type Stream<T extends VV = VV> = StreamClass<T> & StreamCallable<T>
 
-Object.getOwnPropertyNames(StreamClass)
-  .filter(
-    (prop) => typeof StreamClass[prop] === 'function' && prop !== 'constructor',
-  )
-  .forEach((name) => {
-    StreamClass.create[name] = StreamClass[name]
-  })
+export const Stream = Object.assign(
+  StreamClass.create,
 
-export const Stream = StreamClass.create as typeof StreamClass['create'] &
-  typeof StreamClass
+  // provides type
+  StreamClass,
+
+  // actually provides static methods
+  Object.fromEntries(
+    Object.getOwnPropertyNames(StreamClass)
+      .map((key) => [key, StreamClass[key]])
+      .filter((t) => typeof t[1] === 'function'),
+  ) as {},
+)

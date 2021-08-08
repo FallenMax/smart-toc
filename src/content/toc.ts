@@ -1,10 +1,10 @@
-import { Stream } from './util/stream'
-import { createEventEmitter } from './util/event'
-import { getScrollElement, smoothScroll, getScrollTop } from './lib/scroll'
 import { extractHeadings } from './lib/extract'
-import { ui } from './ui/index'
-import { Article, Scroller, Content, Heading } from './types'
 import { enterReadableMode, leaveReadableMode } from './lib/readable'
+import { getScrollElement, getScrollTop, smoothScroll } from './lib/scroll'
+import { Article, Content, Heading, Scroller } from './types'
+import { ui } from './ui/index'
+import { createEventEmitter } from './util/event'
+import { Stream } from './util/stream'
 
 export interface TocPreference {
   offset: {
@@ -73,12 +73,12 @@ function activeHeadingStream({
     .startsWith(null)
     .log('scroll')
 
-  const $activeHeading: Stream<number> = Stream.combine([
+  const $activeHeading: Stream<number> = Stream.combine(
     $content,
     $topbarHeight,
     $scroll,
     $isShown,
-  ])
+  )
     .filter(() => $isShown())
     .map(([content, topbarHeight, _]) => {
       const { article, scroller, headings } = content
@@ -116,56 +116,54 @@ function contentStream({
     .throttle(100)
     .log('resize')
 
-  const $content: Stream<Content> = Stream.merge([
+  const $content: Stream<Content> = Stream.merge(
     $triggerContentChange,
     $isShown,
     $resize,
     $periodicCheck,
-  ])
+  )
     .filter(() => $isShown())
-    .map(
-      (): Content => {
-        const articleRect = article.getBoundingClientRect()
-        const scrollerRect =
-          scroller === document.body || scroller === document.documentElement
-            ? {
-                left: 0,
-                right: window.innerWidth,
-                top: 0,
-                bottom: window.innerHeight,
-                height: window.innerHeight,
-                width: window.innerWidth,
-              }
-            : scroller.getBoundingClientRect()
-        const headings = extractHeadings(article)
-        const scrollY = getScrollTop(scroller)
-        const headingsMeasured = headings.map((h) => {
-          const headingRect = h.dom.getBoundingClientRect()
-          return {
-            ...h,
-            fromArticleTop:
-              headingRect.top - (articleRect.top - article.scrollTop),
-          }
-        })
+    .map((): Content => {
+      const articleRect = article.getBoundingClientRect()
+      const scrollerRect =
+        scroller === document.body || scroller === document.documentElement
+          ? {
+              left: 0,
+              right: window.innerWidth,
+              top: 0,
+              bottom: window.innerHeight,
+              height: window.innerHeight,
+              width: window.innerWidth,
+            }
+          : scroller.getBoundingClientRect()
+      const headings = extractHeadings(article)
+      const scrollY = getScrollTop(scroller)
+      const headingsMeasured = headings.map((h) => {
+        const headingRect = h.dom.getBoundingClientRect()
         return {
-          article: {
-            dom: article,
-            fromScrollerTop:
-              article === scroller
-                ? 0
-                : articleRect.top - scrollerRect.top + scrollY,
-            left: articleRect.left,
-            right: articleRect.right,
-            height: articleRect.height,
-          },
-          scroller: {
-            dom: scroller,
-            rect: scrollerRect,
-          },
-          headings: headingsMeasured,
+          ...h,
+          fromArticleTop:
+            headingRect.top - (articleRect.top - article.scrollTop),
         }
-      },
-    )
+      })
+      return {
+        article: {
+          dom: article,
+          fromScrollerTop:
+            article === scroller
+              ? 0
+              : articleRect.top - scrollerRect.top + scrollY,
+          left: articleRect.left,
+          right: articleRect.right,
+          height: articleRect.height,
+        },
+        scroller: {
+          dom: scroller,
+          rect: scrollerRect,
+        },
+        headings: headingsMeasured,
+      }
+    })
 
   return $content
 }
@@ -259,12 +257,12 @@ export function createToc(options: {
     options.preference.offset,
   ).log('offset')
 
-  const $readableMode = Stream.combine([
+  const $readableMode = Stream.combine(
     $isShown.unique(),
     $content.map((c) => c.article.height).unique(),
     $content.map((c) => c.scroller.rect.height).unique(),
     $content.map((c) => c.headings.length).unique(),
-  ])
+  )
     .map(([isShown]) => isShown)
     .log('readable')
 
