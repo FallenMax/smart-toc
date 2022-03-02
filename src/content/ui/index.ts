@@ -33,21 +33,35 @@ const calcStyle = function (options: {
   //-------------- x --------------
   const { left, right } = article
   const winWidth = window.innerWidth
+  const winHeight = window.innerHeight
   const panelMinWidth = 250
-  const gap = 80
-  const x =
-    options.placement === 'left'
-      ? Math.max(0, left - gap - panelMinWidth) // place at left
-      : Math.min(right + gap, winWidth - panelMinWidth) // place at right
+  const gap = 60
+
+  // just make it in right bottom corner
+  const x = winWidth - gap - panelMinWidth
+  // const x =
+  //   options.placement === 'left'
+  //     ? Math.max(0, left - gap - panelMinWidth) // place at left
+  //     : Math.min(right + gap, winWidth - panelMinWidth) // place at right
 
   //-------------- y --------------
   const scrollableTop = scroller.dom === document.body ? 0 : scroller.rect.top
-  const y = Math.max(scrollableTop, topMargin) + 50
 
+  // just make it in right bottom corner
+  const y = winHeight - gap - scrollableTop 
+  // const y = Math.max(scrollableTop, topMargin) + 50
+
+  // const style = {
+  //   left: `${x + offset.x}px`,
+  //   top: `${y + offset.y}px`,
+  //   maxHeight: `calc(100vh - ${Math.max(scrollableTop, topMargin)}px - 50px)`,
+  // }
+
+  // just make it in right bottom corner
   const style = {
-    left: `${x + offset.x}px`,
-    top: `${y + offset.y}px`,
-    maxHeight: `calc(100vh - ${y}px - 50px)`,
+    right: `${gap - offset.x}px`,
+    bottom: `${gap - offset.y}px`,
+    maxHeight: `calc(${winHeight}px - ${Math.max(scrollableTop, topMargin)}px - 50px)`,
   }
 
   return style
@@ -110,7 +124,9 @@ export const ui = {
           return null
         }
         if (!initialPlacement) {
-          initialPlacement = calcPlacement($article())
+          // initialPlacement = calcPlacement($article())
+          // set default placement to right
+          initialPlacement = 'right'
         }
 
         return m(

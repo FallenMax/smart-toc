@@ -139,7 +139,18 @@ export const extractArticle = function(): HTMLElement | undefined {
       reweighted,
     })
   }
-  const article = reweighted.length ? reweighted[0].elem : undefined
+  let article: HTMLElement | undefined = reweighted.length ? reweighted[0].elem : undefined
+
+  const dm=document.domain;
+  const isInoReader = dm.indexOf('inoreader.com')>=0 || dm.indexOf('innoreader.com')>0;
+  const isFeedly = dm.indexOf('feedly.com')>0;
+  if(isInoReader){
+    const content = document.querySelector('.article_content');
+    if(content!=null){
+      article = content as HTMLElement;
+    }
+  }
+
   if (isDebugging) {
     draw(article, 'red')
   }
@@ -176,7 +187,7 @@ export const extractHeadings = (articleDom: HTMLElement): Heading[] => {
         if (tag.toLowerCase() === 'strong') {
           // for <strong> elements, only take them as heading when they align at left
           const commonLeft = getElemsCommonLeft(elems)
-          if (commonLeft === undefined || commonLeft > window.innerWidth / 2) {
+          if (commonLeft === undefined || commonLeft > articleDom.getBoundingClientRect().left + 100) {
             elems = []
           } else {
             elems = elems.filter(

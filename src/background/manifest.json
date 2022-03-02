@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Smart TOC",
-  "version": "0.5.9",
+  "version": "0.6.0",
   "description": "Webpage outliner",
   "browser_action": {
     "default_icon": "icon.png",

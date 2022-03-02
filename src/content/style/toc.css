@@ -13,8 +13,8 @@
   flex-direction: column;
   align-items: stretch;
   position: fixed;
-  left: 0px;
-  top: 0px;
+  /* left: 0px; */
+  /* top: 0px; */
   min-width: 14em;
   max-width: 50vw;
   max-height: 100vh;

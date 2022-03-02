@@ -44,3 +44,10 @@ export interface Offset {
   x: number
   y: number
 }
+
+declare global {
+  interface Window {
+    MutationObserver:any;
+    WebKitMutationObserver:any;
+  }
+}

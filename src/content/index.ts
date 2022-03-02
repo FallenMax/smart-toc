@@ -51,4 +51,62 @@ if (window === getContentWindow()) {
   )
 
   start()
+
+  function domListener() {
+    let articleId = ''
+
+    var MutationObserver =
+      window.MutationObserver || window.WebKitMutationObserver
+
+    if (typeof MutationObserver !== 'function') {
+      console.error(
+        'DOM Listener Extension: MutationObserver is not available in your browser.',
+      )
+      return
+    }
+
+    // Select the node that will be observed for mutations
+    const targetNode = document
+
+    // Options for the observer (which mutations to observe)
+    const config = { attributes: true,attributeOldValue: true,subtree: true,
+      childList: true, }
+
+    // Callback function to execute when mutations are observed
+    const callback = function (mutationsList, observer) {
+      // Use traditional 'for loops' for IE 11
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'attributes') {
+          const el: HTMLElement = mutation.target as HTMLElement
+          if (
+            el.className.indexOf(' article_expanded') > 0 &&
+            el.id !== articleId
+          ) {
+            console.log(el)
+            articleId = el.id
+            start()
+          }
+        }
+      }
+    }
+
+    // Create an observer instance linked to the callback function
+    const observer = new MutationObserver(callback)
+
+    observer.disconnect()
+
+    // Start observing the target node for configured mutations
+    observer.observe(targetNode, config)
+
+    // Later, you can stop observing
+    // observer.disconnect()
+  }
+
+  const dm = document.domain
+  const isInoReader =
+    dm.indexOf('inoreader.com') >= 0 || dm.indexOf('innoreader.com') > 0
+  const isFeedly = dm.indexOf('feedly.com') > 0
+  if (isInoReader || isFeedly) {
+    domListener()
+  }
 }
