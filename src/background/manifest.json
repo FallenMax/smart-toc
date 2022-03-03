@@ -12,8 +12,7 @@
     "128": "icon.png"
   },
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "scripts": ["background.js"]
   },
   "commands": {
     "toggle": {
@@ -32,6 +31,6 @@
       "description": "Jump to next heading"
     }
   },
-  "permissions": ["activeTab"],
-  "author": "FallenMax@gmail.com"
+  "permissions": ["activeTab","storage","contextMenus"],
+  "author": "FallenMax@gmail.com, louchenabc@gmail.com"
 }

@@ -5,6 +5,7 @@ import { Article, Content, Heading, Scroller } from './types'
 import { ui } from './ui/index'
 import { createEventEmitter } from './util/event'
 import { Stream } from './util/stream'
+import { isDebugging, offsetKey } from './util/env'
 
 export interface TocPreference {
   offset: {
@@ -168,17 +169,17 @@ function contentStream({
   return $content
 }
 
-function topbarStream($triggerTopbarMeasure: Stream<HTMLElement>) {
+function topbarStream($triggerTopbarMeasure: Stream<HTMLElement>, scroller: HTMLElement) {
   const getTopbarHeight = (targetElem: HTMLElement): number => {
     const findFixedParent = (elem: HTMLElement | null) => {
       const isFixed = (elem: HTMLElement) => {
         let { position, zIndex } = window.getComputedStyle(elem)
         return position === 'fixed' && zIndex
       }
-      while (elem && elem !== document.body && !isFixed(elem)) {
+      while (elem && elem !== document.body && !isFixed(elem) && elem !== scroller) {
         elem = elem.parentElement
       }
-      return elem === document.body ? null : elem
+      return elem === document.body || elem === scroller ? null : elem
     }
 
     const { top, left, right, bottom } = targetElem.getBoundingClientRect()
@@ -234,7 +235,7 @@ export function createToc(options: {
   //-------------- Observables --------------
   const $isShown = $triggerIsShown.unique().log('isShown')
 
-  const $topbarHeight = topbarStream($triggerTopbarMeasure).log('topbarHeight')
+  const $topbarHeight = topbarStream($triggerTopbarMeasure,scroller).log('topbarHeight')
 
   const $content = contentStream({
     $triggerContentChange,
@@ -273,10 +274,12 @@ export function createToc(options: {
       const topbarHeight = $topbarHeight()
       const heading = headings[headingIndex]
       if (heading) {
+        const dm=document.domain;
+        const isInoReader = dm.indexOf('inoreader.com')>=0 || dm.indexOf('innoreader.com')>0;
         smoothScroll({
           target: heading.dom,
           scroller: scroller.dom,
-          topMargin: topbarHeight || 0 + 10,
+          topMargin: (topbarHeight || 0) + ( isInoReader ? 50 : 10),
           callback() {
             $triggerTopbarMeasure(heading.dom)
             resolve()
@@ -288,14 +291,15 @@ export function createToc(options: {
     })
   }
 
-  $readableMode.subscribe((enableReadableMode) => {
-    if (enableReadableMode) {
-      enterReadableMode($content(), { topbarHeight: $topbarHeight() })
-    } else {
-      leaveReadableMode()
-    }
-    $triggerContentChange(null)
-  })
+  //remove this mode to fix style issue
+  // $readableMode.subscribe((enableReadableMode) => {
+  //   if (enableReadableMode) {
+  //     enterReadableMode($content(), { topbarHeight: $topbarHeight() })
+  //   } else {
+  //     leaveReadableMode()
+  //   }
+  //   $triggerContentChange(null)
+  // })
 
   const validate = (content: Content): void => {
     const { article, headings, scroller } = content
@@ -325,6 +329,11 @@ export function createToc(options: {
     $topbarHeight,
     onDrag(offset) {
       $offset(offset)
+      const data={};
+      data[offsetKey] = offset;
+      chrome.storage.local.set(data,function() {
+        // console.log('Value is set to ' + data);
+      });
     },
     onScrollToHeading: scrollToHeading,
   })

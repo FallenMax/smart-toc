@@ -19,5 +19,15 @@ const execOnCurrentTab = (command) => {
   })
 }
 
+chrome.contextMenus.removeAll();
+chrome.contextMenus.create({
+      title: "Reset TOC Position",
+      contexts: ["browser_action"],
+      onclick: function() {
+        chrome.storage.local.clear();
+        execOnCurrentTab('refresh')
+      }
+});
+
 chrome.browserAction.onClicked.addListener(() => execOnCurrentTab('toggle'))
 chrome.commands.onCommand.addListener((command) => execOnCurrentTab(command))

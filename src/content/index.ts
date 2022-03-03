@@ -1,24 +1,45 @@
 import { extractArticle, extractHeadings } from './lib/extract'
 import { getContentWindow } from './lib/iframe'
 import { createToc, Toc, TocPreference } from './toc'
+import { isDebugging, offsetKey } from './util/env'
 import { showToast } from './util/toast'
+
+function setPreference(preference,callback){
+  chrome.storage.local.get(offsetKey,function(result){
+    const offset = result[offsetKey];
+    if(offset && offset.x && offset.y){
+      preference.offset.x=offset.x;
+      preference.offset.y=offset.y;
+    }
+    else{
+      preference.offset.x=0;
+      preference.offset.y=0;
+    }
+    if(callback){
+      callback();
+    }
+  });
+}
 
 if (window === getContentWindow()) {
   let preference: TocPreference = {
     offset: { x: 0, y: 0 },
   }
+
   let toc: Toc | undefined
 
   const start = (): void => {
+    if (toc) {
+      toc.dispose()
+    }
+
     const article = extractArticle()
     const headings = article && extractHeadings(article)
     if (!(article && headings && headings.length)) {
       showToast('No article/headings are detected.')
       return
     }
-    if (toc) {
-      toc.dispose()
-    }
+    
     toc = createToc({
       article,
       preference,
@@ -35,10 +56,10 @@ if (window === getContentWindow()) {
   }
 
   chrome.runtime.onMessage.addListener(
-    (request: 'toggle' | 'prev' | 'next', sender, sendResponse) => {
+    (request: 'toggle' | 'prev' | 'next' | 'refresh', sender, sendResponse) => {
       try {
-        if (!toc) {
-          start()
+        if (!toc || request === 'refresh') {
+          setPreference(preference,start);
         } else {
           toc[request]()
         }
@@ -50,10 +71,9 @@ if (window === getContentWindow()) {
     },
   )
 
-  start()
+  setPreference(preference,start);
 
   function domListener() {
-    let articleId = ''
 
     var MutationObserver =
       window.MutationObserver || window.WebKitMutationObserver
@@ -69,24 +89,21 @@ if (window === getContentWindow()) {
     const targetNode = document
 
     // Options for the observer (which mutations to observe)
-    const config = { attributes: true,attributeOldValue: true,subtree: true,
-      childList: true, }
+    const config = {
+      attributes: true, attributeOldValue: true, subtree: true,
+      childList: true,
+    }
+
+    let timeoutRefresh:any = null;
 
     // Callback function to execute when mutations are observed
     const callback = function (mutationsList, observer) {
-      // Use traditional 'for loops' for IE 11
-      for (const mutation of mutationsList) {
-        if (mutation.type === 'attributes') {
-          const el: HTMLElement = mutation.target as HTMLElement
-          if (
-            el.className.indexOf(' article_expanded') > 0 &&
-            el.id !== articleId
-          ) {
-            console.log(el)
-            articleId = el.id
-            start()
-          }
-        }
+      clearTimeout(timeoutRefresh);
+      timeoutRefresh = setTimeout(() => {
+        setPreference(preference,refresh)
+      }, 500);
+      if(isDebugging){
+        console.log('dom changed')
       }
     }
 
@@ -102,10 +119,29 @@ if (window === getContentWindow()) {
     // observer.disconnect()
   }
 
+  let articleId = ''
+  let articleContentClass=''
+  function refresh(){
+    const articleClass= isFeedly ? '.entryBody' :'.article_content';
+    const el: HTMLElement = document.querySelector(articleClass) as HTMLElement;
+    if (
+      (el && (el.id !== articleId || el.className!== articleContentClass)) ||
+      (!el && articleId!=='')
+    ) {
+      if(isDebugging){
+        console.log('refresh')
+        console.log(el)
+      }
+      articleId = el ? el.id :''
+      articleContentClass = el ? el.className : ''
+      start()
+    } 
+  }
+
   const dm = document.domain
   const isInoReader =
     dm.indexOf('inoreader.com') >= 0 || dm.indexOf('innoreader.com') > 0
-  const isFeedly = dm.indexOf('feedly.com') > 0
+  const isFeedly = dm.indexOf('feedly.com') >= 0
   if (isInoReader || isFeedly) {
     domListener()
   }

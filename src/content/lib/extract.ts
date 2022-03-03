@@ -143,11 +143,15 @@ export const extractArticle = function(): HTMLElement | undefined {
 
   const dm=document.domain;
   const isInoReader = dm.indexOf('inoreader.com')>=0 || dm.indexOf('innoreader.com')>0;
-  const isFeedly = dm.indexOf('feedly.com')>0;
-  if(isInoReader){
-    const content = document.querySelector('.article_content');
+  const isFeedly = dm.indexOf('feedly.com')>=0;
+  if(isInoReader || isFeedly){
+    const articleClass= isFeedly ? '.entryBody' :'.article_content'
+    const content = document.querySelector(articleClass)
     if(content!=null){
-      article = content as HTMLElement;
+      article = content as HTMLElement
+    }
+    else{
+      article = undefined
     }
   }
 

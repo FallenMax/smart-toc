@@ -35,7 +35,7 @@ const calcStyle = function (options: {
   const winWidth = window.innerWidth
   const winHeight = window.innerHeight
   const panelMinWidth = 250
-  const gap = 60
+  const gap = 30
 
   // just make it in right bottom corner
   const x = winWidth - gap - panelMinWidth
@@ -61,7 +61,7 @@ const calcStyle = function (options: {
   const style = {
     right: `${gap - offset.x}px`,
     bottom: `${gap - offset.y}px`,
-    maxHeight: `calc(${winHeight}px - ${Math.max(scrollableTop, topMargin)}px - 50px)`,
+    // maxHeight: `250px`,
   }
 
   return style

@@ -16,8 +16,8 @@
   /* left: 0px; */
   /* top: 0px; */
   min-width: 14em;
-  max-width: 50vw;
-  max-height: 100vh;
+  width: 260px;
+  max-height: 80vh;
   z-index: 10000;
   box-sizing: border-box;
   background-color: #fff;
@@ -33,6 +33,7 @@
   will-change: transform, max-width;
   transition: max-width 0.3s;
   contain: content;
+  box-shadow: rgba(17, 17, 26, 0.1) 0px 4px 16px, rgba(17, 17, 26, 0.1) 0px 8px 24px, rgba(17, 17, 26, 0.1) 0px 16px 56px;
 }
 
 #smarttoc.hidden {
@@ -95,7 +96,8 @@
   padding-bottom: 0.2em;
   text-overflow: ellipsis;
   overflow-x: hidden;
-  white-space: nowrap;
+  /* white-space: nowrap; */
+  word-break: break-all;
   cursor: pointer;
 }
 
