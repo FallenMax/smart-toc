@@ -1,4 +1,4 @@
-# Smart TOC (for Chrome/Firefox)
+# Smart TOC (for Chrome/Firefox), 💥 Support Inoreader and Feedly
 
 > webpage outliner
 
