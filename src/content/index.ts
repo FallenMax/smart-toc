@@ -4,21 +4,26 @@ import { createToc, Toc, TocPreference } from './toc'
 import { isDebugging, offsetKey } from './util/env'
 import { showToast } from './util/toast'
 
-function setPreference(preference,callback){
-  chrome.storage.local.get(offsetKey,function(result){
-    const offset = result[offsetKey];
-    if(offset && offset.x && offset.y){
-      preference.offset.x=offset.x;
-      preference.offset.y=offset.y;
-    }
-    else{
-      preference.offset.x=0;
-      preference.offset.y=0;
-    }
-    if(callback){
-      callback();
-    }
-  });
+function setPreference(preference, callback) {
+  if (chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get(offsetKey, function (result) {
+      const offset = result[offsetKey];
+      if (offset && offset.x && offset.y) {
+        preference.offset.x = offset.x;
+        preference.offset.y = offset.y;
+      }
+      else {
+        preference.offset.x = 0;
+        preference.offset.y = 0;
+      }
+      if (callback) {
+        callback();
+      }
+    });
+  }
+  else if(callback){
+    callback();
+  }
 }
 
 if (window === getContentWindow()) {
@@ -39,7 +44,7 @@ if (window === getContentWindow()) {
       showToast('No article/headings are detected.')
       return
     }
-    
+
     toc = createToc({
       article,
       preference,
@@ -59,7 +64,7 @@ if (window === getContentWindow()) {
     (request: 'toggle' | 'prev' | 'next' | 'refresh', sender, sendResponse) => {
       try {
         if (!toc || request === 'refresh') {
-          setPreference(preference,start);
+          setPreference(preference, start);
         } else {
           toc[request]()
         }
@@ -71,7 +76,7 @@ if (window === getContentWindow()) {
     },
   )
 
-  setPreference(preference,start);
+  setPreference(preference, start);
 
   function domListener() {
 
@@ -94,15 +99,15 @@ if (window === getContentWindow()) {
       childList: true,
     }
 
-    let timeoutRefresh:any = null;
+    let timeoutRefresh: any = null;
 
     // Callback function to execute when mutations are observed
     const callback = function (mutationsList, observer) {
       clearTimeout(timeoutRefresh);
       timeoutRefresh = setTimeout(() => {
-        setPreference(preference,refresh)
+        setPreference(preference, refresh)
       }, 500);
-      if(isDebugging){
+      if (isDebugging) {
         console.log('dom changed')
       }
     }
@@ -120,22 +125,22 @@ if (window === getContentWindow()) {
   }
 
   let articleId = ''
-  let articleContentClass=''
-  function refresh(){
-    const articleClass= isFeedly ? '.entryBody' :'.article_content';
+  let articleContentClass = ''
+  function refresh() {
+    const articleClass = isFeedly ? '.entryBody' : '.article_content';
     const el: HTMLElement = document.querySelector(articleClass) as HTMLElement;
     if (
-      (el && (el.id !== articleId || el.className!== articleContentClass)) ||
-      (!el && articleId!=='')
+      (el && (el.id !== articleId || el.className !== articleContentClass)) ||
+      (!el && articleId !== '')
     ) {
-      if(isDebugging){
+      if (isDebugging) {
         console.log('refresh')
         console.log(el)
       }
-      articleId = el ? el.id :''
+      articleId = el ? el.id : ''
       articleContentClass = el ? el.className : ''
       start()
-    } 
+    }
   }
 
   const dm = document.domain

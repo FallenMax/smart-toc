@@ -24,8 +24,10 @@ chrome.contextMenus.create({
       title: "Reset TOC Position",
       contexts: ["browser_action"],
       onclick: function() {
-        chrome.storage.local.clear();
-        execOnCurrentTab('refresh')
+        if(chrome.storage){
+          chrome.storage.local.clear();
+          execOnCurrentTab('refresh')
+        }
       }
 });
 
