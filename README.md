@@ -4,7 +4,7 @@
 
 ## 📣 Download Release version, it's Support Inoreader and Feedly
 
-Download from [Releases](https://github.com/lcomplete/smart-toc/releases) page, Chrome Webstore is'nt ready.
+Download from [Releases](https://github.com/lcomplete/smart-toc/releases) page, Chrome Webstore isn't ready.
 
 ## Download
 
