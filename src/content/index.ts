@@ -110,7 +110,7 @@ if (window === getContentWindow()) {
       let intervalCount=0;
       timeoutTrack = setInterval(() => {
         intervalCount++;
-        if(intervalCount==10){ // 最多检测两秒
+        if(intervalCount=7){ // 最多检测两秒
           clearInterval(timeoutTrack)
         }
         if(isDebugging){
@@ -118,7 +118,7 @@ if (window === getContentWindow()) {
         }
         domChangeCount = 0;
         setPreference(preference, trackArticle)
-      }, 200);
+      }, 300);
     }
 
     if(observer === null){
@@ -192,6 +192,11 @@ if (window === getContentWindow()) {
       domListener()
     }
   }
+
+  chrome.action.setIcon({
+      path:"icon_gray.png"
+    }
+  )
 
   function unload(){
     isLoad = false
