@@ -1,9 +1,10 @@
 {
-  "manifest_version": 2,
-  "name": "Smart TOC",
-  "version": "0.6.0",
-  "description": "Webpage outliner",
-  "browser_action": {
+  "manifest_version": 3,
+  "name": "Smart TOC / 智能网页大纲",
+  "version": "0.7.0",
+  "description": "Webpage outliner / 自动生成网页大纲、目录，Support Inoreader and Feedly。",
+  "options_page": "options.html",
+  "action": {
     "default_icon": "icon.png",
     "default_title": "Toggle table of contents"
   },
@@ -12,8 +13,15 @@
     "128": "icon.png"
   },
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*","https://*/*"],
+      "js": ["toc.js"],
+      "run_at": "document_end"
+    }
+  ],
   "commands": {
     "toggle": {
       "suggested_key": {
@@ -22,7 +30,7 @@
         "chromeos": "Ctrl+Shift+E",
         "linux": "Ctrl+Shift+E"
       },
-      "description": "Show/hide TOC"
+      "description": "Load/unload TOC"
     },
     "prev": {
       "description": "Jump to previous heading"
@@ -31,6 +39,7 @@
       "description": "Jump to next heading"
     }
   },
-  "permissions": ["activeTab","storage","contextMenus"],
-  "author": "FallenMax@gmail.com, louchenabc@gmail.com"
+  "permissions": ["activeTab","tabs","storage","contextMenus","scripting"],
+  "host_permissions": ["http://*/*","https://*/*"],
+  "author": "louchenabc@gmail.com"
 }

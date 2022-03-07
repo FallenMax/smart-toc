@@ -319,6 +319,12 @@ export function createToc(options: {
   }
   $content.subscribe(validate)
 
+  let isRememberPos = true;
+  chrome.storage.local.get({
+    isRememberPos: true
+  }, function (items) {
+    isRememberPos = items.isRememberPos;
+  });
   ui.render({
     $isShown,
     $article: $content.map((c) => c.article),
@@ -329,11 +335,13 @@ export function createToc(options: {
     $topbarHeight,
     onDrag(offset) {
       $offset(offset)
-      const data={};
-      data[offsetKey] = offset;
-      chrome.storage.local.set(data,function() {
-        // console.log('Value is set to ' + data);
-      });
+      if (isRememberPos) {
+        const data = {};
+        data[offsetKey] = offset;
+        chrome.storage.local.set(data, function () {
+          //  no callback
+        });
+      }
     },
     onScrollToHeading: scrollToHeading,
   })

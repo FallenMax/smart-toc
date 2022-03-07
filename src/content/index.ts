@@ -6,9 +6,13 @@ import { showToast } from './util/toast'
 
 function setPreference(preference, callback) {
   if (chrome.storage && chrome.storage.local) {
-    chrome.storage.local.get(offsetKey, function (result) {
+    const defaultOptions= {
+      isRememberPos: true
+    }
+    defaultOptions[offsetKey] = {x:0,y:0};
+    chrome.storage.local.get(defaultOptions, function (result) {
       const offset = result[offsetKey];
-      if (offset && offset.x && offset.y) {
+      if (result.isRememberPos) {
         preference.offset.x = offset.x;
         preference.offset.y = offset.y;
       }
@@ -30,6 +34,7 @@ if (window === getContentWindow()) {
   let preference: TocPreference = {
     offset: { x: 0, y: 0 },
   }
+  let isLoad = false;
 
   let toc: Toc | undefined
 
@@ -41,7 +46,13 @@ if (window === getContentWindow()) {
     const article = extractArticle()
     const headings = article && extractHeadings(article)
     if (!(article && headings && headings.length)) {
-      showToast('No article/headings are detected.')
+      chrome.storage.local.get({
+        isShowTip: true
+      }, function (items) {
+        if(items.isShowTip){
+          showToast('No article/headings are detected.')
+        }
+      });
       return
     }
 
@@ -55,7 +66,7 @@ if (window === getContentWindow()) {
         toc = undefined
       }
       // re-extract && restart
-      start()
+      // start()
     })
     toc.show()
   }
@@ -63,10 +74,13 @@ if (window === getContentWindow()) {
   chrome.runtime.onMessage.addListener(
     (request: 'toggle' | 'prev' | 'next' | 'refresh', sender, sendResponse) => {
       try {
-        if (!toc || request === 'refresh') {
-          setPreference(preference, start);
+        if (!toc || !isLoad || request === 'refresh') {
+          load();
         } else {
           toc[request]()
+          if(isLoad && request === 'toggle'){
+            unload()
+          }
         }
         sendResponse(true)
       } catch (e) {
@@ -76,13 +90,12 @@ if (window === getContentWindow()) {
     },
   )
 
-  setPreference(preference, start);
+  let observer:any = null;
+  let timeoutTrack: any = null;
 
   function domListener() {
-
     var MutationObserver =
       window.MutationObserver || window.WebKitMutationObserver
-
     if (typeof MutationObserver !== 'function') {
       console.error(
         'DOM Listener Extension: MutationObserver is not available in your browser.',
@@ -90,35 +103,38 @@ if (window === getContentWindow()) {
       return
     }
 
-    // Select the node that will be observed for mutations
-    const targetNode = document
+    let domChangeCount = 0;
+    const callback = function (mutationsList, observer) {
+      clearInterval(timeoutTrack);
+      domChangeCount++;
+      let intervalCount=0;
+      timeoutTrack = setInterval(() => {
+        intervalCount++;
+        if(intervalCount==10){ // 最多检测两秒
+          clearInterval(timeoutTrack)
+        }
+        if(isDebugging){
+          console.log({domChangeCount});
+        }
+        domChangeCount = 0;
+        setPreference(preference, trackArticle)
+      }, 200);
+    }
 
-    // Options for the observer (which mutations to observe)
-    const config = {
+    if(observer === null){
+      observer = new MutationObserver(callback)
+    }
+    else {
+      observer.disconnect()
+    }
+
+     // Options for the observer (which mutations to observe)
+     const config = {
       attributes: true, attributeOldValue: true, subtree: true,
       childList: true,
     }
-
-    let timeoutRefresh: any = null;
-
-    // Callback function to execute when mutations are observed
-    const callback = function (mutationsList, observer) {
-      clearTimeout(timeoutRefresh);
-      timeoutRefresh = setTimeout(() => {
-        setPreference(preference, refresh)
-      }, 500);
-      if (isDebugging) {
-        console.log('dom changed')
-      }
-    }
-
-    // Create an observer instance linked to the callback function
-    const observer = new MutationObserver(callback)
-
-    observer.disconnect()
-
     // Start observing the target node for configured mutations
-    observer.observe(targetNode, config)
+    observer.observe(document, config)
 
     // Later, you can stop observing
     // observer.disconnect()
@@ -126,7 +142,7 @@ if (window === getContentWindow()) {
 
   let articleId = ''
   let articleContentClass = ''
-  function refresh() {
+  function trackArticle() {
     const articleClass = isFeedly ? '.entryBody' : '.article_content';
     const el: HTMLElement = document.querySelector(articleClass) as HTMLElement;
     if (
@@ -140,6 +156,7 @@ if (window === getContentWindow()) {
       articleId = el ? el.id : ''
       articleContentClass = el ? el.className : ''
       start()
+      clearInterval(timeoutTrack)
     }
   }
 
@@ -147,7 +164,41 @@ if (window === getContentWindow()) {
   const isInoReader =
     dm.indexOf('inoreader.com') >= 0 || dm.indexOf('innoreader.com') > 0
   const isFeedly = dm.indexOf('feedly.com') >= 0
-  if (isInoReader || isFeedly) {
-    domListener()
+
+  // auto load
+  chrome.storage.local.get({
+    autoType: '0'
+  }, function(items) {
+    if(items.autoType!=='0'){ // not disabled
+      let isAutoLoad = items.autoType === '1'; // all page
+      if (items.autoType === '2') { // rss web app
+        const dm = document.domain
+        const isInoReader =
+          dm.indexOf('inoreader.com') >= 0 || dm.indexOf('innoreader.com') > 0
+        const isFeedly = dm.indexOf('feedly.com') >= 0
+        isAutoLoad = isInoReader || isFeedly;
+      }
+  
+      if(isAutoLoad){
+        load();
+      }
+    }
+  });
+
+  function load(){
+    isLoad = true
+    setPreference(preference, start);
+    if (isInoReader || isFeedly) {
+      domListener()
+    }
   }
+
+  function unload(){
+    isLoad = false
+    if(observer !== null){
+      observer.disconnect()
+      observer = null
+    }
+  }
+  
 }

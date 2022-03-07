@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Smart TOC Options / 智能网页大纲-选项</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<link rel="stylesheet" href="css/chrome_shared.css"/>
+	<style>
+		body>.main-container{max-width:800px;margin:50px auto}
+		header{margin:0 auto 50px auto;font-size:36px}
+		#status{color:green;}
+</style>
+</head>
+
+<body>
+
+	<div class="main-container">
+		<header>
+			Smart TOC Options / 智能网页大纲-选项
+		</header>
+
+		<h1>Auto Load / 自动加载</h1>
+		<hr />
+		<div class="radio">
+			<div>
+				<input id="auto-0" type="radio" name="auto" value="0">
+				<label for="auto-0">Disable / 禁用</label>
+			</div>
+		</div>
+		<div class="radio">
+			<div>
+				<input id="auto-1" type="radio" name="auto" value="1">
+				<label for="auto-1">All Page / 所有页面</label>
+			</div>
+		</div>
+		<div class="radio">
+			<div>
+				<input id="auto-2" type="radio" name="auto" value="2">
+				<label for="auto-2">Inoreader and Feedly Web App / 网页版 Inoreader 和 Feedly</label>
+			</div>
+		</div>
+
+		<h1>UI</h1>
+		<hr />
+
+		<div class="checkbox">
+			<label>
+				<input type="checkbox" id="show-tip" /><span></span> Show Detect Toast / 显示检测提示
+			</label>
+		</div>
+		<div class="checkbox">
+			<label>
+				<input type="checkbox" id="remember-pos" /><span></span> Remember TOC Position / 记住目录浮窗位置
+			</label>
+		</div>
+
+		<!-- <br />
+		<br />
+		<button style="font-size:16px">Save / 保存</button> -->
+
+		<br />
+		<br />
+		<br />
+		<br />
+		Source Code: <a href="https://github.com/lcomplete/smart-toc" target="_blank">https://github.com/lcomplete/smart-toc</a>
+		<!-- Widgets for Chrome Extension ends -->
+
+		<br />
+		<br />
+		<p>
+			Original &#9829; by <a href="https://github.com/FallenMax/smart-toc" target="_blank">FallenMax</a>
+			<br />
+			Modified &#9829; by <a href="https://twitter.com/lcomplete_wild" target="_blank">lcomplete</a>
+		</p>
+		<br />
+		<br />
+		<div id="status"></div>
+	</div>
+
+	
+
+	<script src="options.js"></script>
+
+	
+</body>
+
+</html>
