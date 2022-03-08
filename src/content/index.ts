@@ -35,16 +35,21 @@ if (window === getContentWindow()) {
     offset: { x: 0, y: 0 },
   }
   let isLoad = false;
+  let isNewArticleDetected = true
 
   let toc: Toc | undefined
 
   const start = (): void => {
+    const article = extractArticle()
+    const headings = article && extractHeadings(article)
+    renderToc(article,headings)
+  }
+
+  const renderToc = (article, headings): void => {
     if (toc) {
       toc.dispose()
     }
 
-    const article = extractArticle()
-    const headings = article && extractHeadings(article)
     if (!(article && headings && headings.length)) {
       chrome.storage.local.get({
         isShowTip: true
@@ -55,6 +60,8 @@ if (window === getContentWindow()) {
       });
       return
     }
+
+    isNewArticleDetected = true
 
     toc = createToc({
       article,
@@ -69,15 +76,21 @@ if (window === getContentWindow()) {
       // start()
     })
     toc.show()
-  }
+  } 
 
   chrome.runtime.onMessage.addListener(
-    (request: 'toggle' | 'prev' | 'next' | 'refresh', sender, sendResponse) => {
+    (request: 'toggle' | 'prev' | 'next' | 'refresh' | 'load' | 'unload', sender, sendResponse) => {
+      if(request === 'load' || request ==='unload'){
+        sendResponse(true)
+        return
+      }
       try {
-        if (!toc || !isLoad || request === 'refresh') {
+        if (!isLoad || request === 'refresh') {
           load();
         } else {
-          toc[request]()
+          if(toc){
+            toc[request]()
+          }
           if(isLoad && request === 'toggle'){
             unload()
           }
@@ -110,14 +123,19 @@ if (window === getContentWindow()) {
       let intervalCount=0;
       timeoutTrack = setInterval(() => {
         intervalCount++;
-        if(intervalCount=7){ // 最多检测两秒
+        if(intervalCount === 4){ // 最多检测次数
           clearInterval(timeoutTrack)
         }
         if(isDebugging){
           console.log({domChangeCount});
         }
         domChangeCount = 0;
-        setPreference(preference, trackArticle)
+        if(intervalCount == 1){
+          setPreference(preference, trackArticle)
+        }
+        else if(intervalCount > 1 && !isNewArticleDetected){
+          detectToc()
+        }
       }, 300);
     }
 
@@ -128,27 +146,34 @@ if (window === getContentWindow()) {
       observer.disconnect()
     }
 
-     // Options for the observer (which mutations to observe)
      const config = {
       attributes: true, attributeOldValue: true, subtree: true,
-      childList: true,
+      childList: true
     }
-    // Start observing the target node for configured mutations
     observer.observe(document, config)
-
-    // Later, you can stop observing
-    // observer.disconnect()
   }
 
   let articleId = ''
   let articleContentClass = ''
+  let selectorInoreader = 'article_content'
+  let selectorFeedly = '.entryBody'
+
+  chrome.storage.local.get({
+    selectorInoreader: '.article_content',
+    selectorFeedly: '.entryBody'
+  }, function(items) {
+    selectorInoreader = items.selectorInoreader
+    selectorFeedly = items.selectorFeedly
+  });
+
+  console.log({selectorInoreader,selectorFeedly})
+
   function trackArticle() {
-    const articleClass = isFeedly ? '.entryBody' : '.article_content';
+    const articleClass = isFeedly ? selectorFeedly : selectorInoreader;
     const el: HTMLElement = document.querySelector(articleClass) as HTMLElement;
-    if (
-      (el && (el.id !== articleId || el.className !== articleContentClass)) ||
-      (!el && articleId !== '')
-    ) {
+    let isArticleChanged = (el && (el.id !== articleId || el.className !== articleContentClass)) || (!el && articleId !== '')
+    if (isArticleChanged) {
+      isNewArticleDetected = false
       if (isDebugging) {
         console.log('refresh')
         console.log(el)
@@ -156,6 +181,16 @@ if (window === getContentWindow()) {
       articleId = el ? el.id : ''
       articleContentClass = el ? el.className : ''
       start()
+    }
+  }
+
+  function detectToc(){
+    const article = extractArticle()
+    const headings = article && extractHeadings(article)
+    if (article && headings && headings.length>0){
+      setPreference(preference, ()=>{
+        renderToc(article, headings)
+      });
       clearInterval(timeoutTrack)
     }
   }
@@ -186,6 +221,7 @@ if (window === getContentWindow()) {
   });
 
   function load(){
+    chrome.runtime.sendMessage("load")
     isLoad = true
     setPreference(preference, start);
     if (isInoReader || isFeedly) {
@@ -193,13 +229,12 @@ if (window === getContentWindow()) {
     }
   }
 
-  chrome.action.setIcon({
-      path:"icon_gray.png"
-    }
-  )
-
   function unload(){
+    chrome.runtime.sendMessage("unload")
     isLoad = false
+    if (toc) {
+      toc.dispose()
+    }
     if(observer !== null){
       observer.disconnect()
       observer = null

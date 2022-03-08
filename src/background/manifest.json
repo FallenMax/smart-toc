@@ -6,7 +6,7 @@
   "options_page": "options.html",
   "action": {
     "default_icon": "icon.png",
-    "default_title": "Toggle table of contents"
+    "default_title": "Smart TOC / 智能网页大纲"
   },
   "icons": {
     "16": "icon.png",
@@ -17,11 +17,17 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*","https://*/*"],
-      "js": ["toc.js"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "toc.js"
+      ],
       "run_at": "document_end"
     }
   ],
+  "content_security_policy":{"extension_pages": "script-src 'self';object-src 'self';script-src-elem 'self' 'unsafe-inline' https://platform.twitter.com https://syndication.twitter.com;"},
   "commands": {
     "toggle": {
       "suggested_key": {
@@ -39,7 +45,16 @@
       "description": "Jump to next heading"
     }
   },
-  "permissions": ["activeTab","tabs","storage","contextMenus","scripting"],
-  "host_permissions": ["http://*/*","https://*/*"],
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "contextMenus",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "author": "louchenabc@gmail.com"
 }

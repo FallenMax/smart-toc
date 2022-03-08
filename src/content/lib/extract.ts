@@ -144,8 +144,20 @@ export const extractArticle = function(): HTMLElement | undefined {
   const dm=document.domain;
   const isInoReader = dm.indexOf('inoreader.com')>=0 || dm.indexOf('innoreader.com')>0;
   const isFeedly = dm.indexOf('feedly.com')>=0;
+
+  let selectorInoreader = '.article_content'
+  let selectorFeedly = '.entryBody'
+
+  chrome.storage.local.get({
+    selectorInoreader: '.article_content',
+    selectorFeedly: '.entryBody'
+  }, function(items) {
+    selectorInoreader = items.selectorInoreader
+    selectorFeedly = items.selectorFeedly
+  });
+
   if(isInoReader || isFeedly){
-    const articleClass= isFeedly ? '.entryBody' :'.article_content'
+    const articleClass= isFeedly ? selectorFeedly : selectorInoreader
     const content = document.querySelector(articleClass)
     if(content!=null){
       article = content as HTMLElement

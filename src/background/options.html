@@ -2,8 +2,9 @@
 <html>
 
 <head>
-	<title>Smart TOC Options / 智能网页大纲-选项</title>
+	<title>Smart TOC / 智能网页大纲 - Support Inoreader and Feedly</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="Content-Security-Policy" content="script-src 'self';object-src 'self';script-src-elem 'self' 'unsafe-inline' https://platform.twitter.com https://syndication.twitter.com;">
 	<link rel="stylesheet" href="css/chrome_shared.css"/>
 	<style>
 		body>.main-container{max-width:800px;margin:50px auto}
@@ -50,22 +51,39 @@
 		</div>
 		<div class="checkbox">
 			<label>
-				<input type="checkbox" id="remember-pos" /><span></span> Remember TOC Position / 记住目录浮窗位置
+				<input type="checkbox" id="remember-pos" /><span></span> Remember TOC Position / 记住目录位置
 			</label>
 		</div>
 
-		<!-- <br />
-		<br />
-		<button style="font-size:16px">Save / 保存</button> -->
+		<h1>Inoreader and Feedly Support</h1>
+		<hr />
+		<div><font color="red">Don't change this unless the web apps change its dom. / 除非它们的网页结构发生了变化，否则不要进行修改。</font></div>
+		<h3>Inoreader article querySelector / Inoreader 文章选择器</h3>
+		<input type="text" id="selector-inoreader" />
+		<h3>Feedly article querySelector / Feedly 文章选择器</h3>
+		<input type="text" id="selector-feedly" />
 
 		<br />
 		<br />
+		<hr />
+		<br />
+		<button style="font-size:16px;" id="btnReset">Reset / 重置设置</button>
+
+		<br />
+		<br />
+		<br />
+		<div>If you like this extension, no need to buy me a coffee, just share to people who need this.</div>
+		<div>如果你喜欢这个插件的话，不需要给我买咖啡，分享给有需要的人吧。</div>
+		<br />
+		<div class="social-buttons fr">
+			
+			<a href="https://twitter.com/share" class="twitter-share-button" data-via="lcomplete_wild" data-text="发现一个超棒的 #浏览器扩展（Smart TOC / 智能网页大纲），它能智能展示文章目录，支持 #Inoreader 和 #Feedly，而且它还是 #开源 免费的，快来升级你的上网体验吧！" data-related="compzets" data-hashtags="" data-url="https://github.com/lcomplete/smart-toc">Tweet</a>
+			<script src="twitter_widgets.js" id="twitter-wjs"></script>
+			<!-- <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> -->
+		</div>
 		<br />
 		<br />
 		Source Code: <a href="https://github.com/lcomplete/smart-toc" target="_blank">https://github.com/lcomplete/smart-toc</a>
-		<!-- Widgets for Chrome Extension ends -->
-
-		<br />
 		<br />
 		<p>
 			Original &#9829; by <a href="https://github.com/FallenMax/smart-toc" target="_blank">FallenMax</a>
@@ -77,10 +95,7 @@
 		<div id="status"></div>
 	</div>
 
-	
-
 	<script src="options.js"></script>
-
 	
 </body>
 
