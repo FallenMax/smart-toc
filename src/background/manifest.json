@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Smart TOC / 智能网页大纲",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Webpage outliner / 自动生成网页大纲、目录，Support Inoreader and Feedly。",
   "options_page": "options.html",
   "action": {
