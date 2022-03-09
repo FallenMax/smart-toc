@@ -155,7 +155,7 @@ if (window === getContentWindow()) {
 
   let articleId = ''
   let articleContentClass = ''
-  let selectorInoreader = 'article_content'
+  let selectorInoreader = '.article_content'
   let selectorFeedly = '.entryBody'
 
   chrome.storage.local.get({
@@ -165,8 +165,6 @@ if (window === getContentWindow()) {
     selectorInoreader = items.selectorInoreader
     selectorFeedly = items.selectorFeedly
   });
-
-  console.log({selectorInoreader,selectorFeedly})
 
   function trackArticle() {
     const articleClass = isFeedly ? selectorFeedly : selectorInoreader;
