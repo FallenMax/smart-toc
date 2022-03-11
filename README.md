@@ -1,15 +1,10 @@
-# Smart TOC (for Chrome/Firefox), 💥 Support Inoreader and Feedly
+# Smart TOC / 智能网页大纲 (for Chrome), 💥 Support Inoreader and Feedly
 
-> webpage outliner
-
-## 📣 Download Release version, it's Support Inoreader and Feedly
-
-Download from [Releases](https://github.com/lcomplete/smart-toc/releases) page, Chrome Webstore isn't ready.
+> Webpage outliner / 自动生成网页大纲、目录，Support Inoreader and Feedly。
 
 ## Download
 
-- Chrome extension: https://chrome.google.com/webstore/detail/smart-toc/lifgeihcfpkmmlfjbailfpfhbahhibba
-- Firefox addon: https://addons.mozilla.org/en-US/firefox/addon/smart_toc/ 
+- Chrome extension: [Smart TOC / 智能网页大纲](https://chrome.google.com/webstore/detail/smart-toc-%E6%99%BA%E8%83%BD%E7%BD%91%E9%A1%B5%E5%A4%A7%E7%BA%B2/ppdjhggfcaenclmimmdigbcglfoklgaf)
 
 ## Build
 
