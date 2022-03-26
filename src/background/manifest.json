@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Smart TOC / 智能网页大纲",
+  "name": "Simple Outliner",
   "version": "0.7.2",
-  "description": "Webpage outliner / 自动生成网页大纲、目录，Support Inoreader and Feedly。",
+  "description": "Simple Outliner / 简易网页大纲，Support Inoreader and Feedly。",
   "options_page": "options.html",
   "action": {
     "default_icon": "icon.png",
-    "default_title": "Smart TOC / 智能网页大纲"
+    "default_title": "Simple Outliner"
   },
   "icons": {
     "16": "icon.png",
