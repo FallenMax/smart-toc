@@ -1,3 +1,7 @@
+> Disclaimer: this repo is not in sync with the latest Smart TOC extension.
+
+---
+
 # Smart TOC (for Chrome/Firefox)
 
 > webpage outliner
